@@ -1,0 +1,15 @@
+spring.application.name: sg-tavern
+
+discord.bot.token:
+
+# uat
+#guildId:
+#introChannelId:
+#admin.bot.channel:
+#adminUserId:
+
+#prod
+guildId:
+introChannelId:
+admin.bot.channel:
+adminUserId:
