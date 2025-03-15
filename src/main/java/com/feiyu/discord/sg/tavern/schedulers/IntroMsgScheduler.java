@@ -1,4 +1,4 @@
-package com.feiyu.discord.sg.tavern.scheduler;
+package com.feiyu.discord.sg.tavern.schedulers;
 
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
 import lombok.AllArgsConstructor;
@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -25,16 +26,16 @@ public class IntroMsgScheduler {
     private final JDA jda;
     
     // Run every 2 days at 9 PM SGT
-    // @Scheduled(cron = "0 0 21 */2 * ?", zone = "Asia/Singapore")
-    @Scheduled(fixedRate = 10000L)
+    @Async
+    @Scheduled(cron = "0 0 21 */2 * ?", zone = "Asia/Singapore")
     public void introReminder() {
         log.info("IntroMsgScheduler.introReminder Start");
         
         // Get the Guild and Channel
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
         List<Member> allGuildMemberList = guild.loadMembers().get();
-        TextChannel introChannel = jda.getTextChannelById(valuesConfig.getIntroChannelId());
-        TextChannel adminChannel = jda.getTextChannelById(valuesConfig.getAdminBotChannelId());
+        TextChannel introChannel = guild.getTextChannelById(valuesConfig.getIntroChannelId());
+        TextChannel adminChannel = guild.getTextChannelById(valuesConfig.getAdminBotChannelId());
         
         // The DS to compare
         Set<String> allMemberIdSet = allGuildMemberList.stream()
