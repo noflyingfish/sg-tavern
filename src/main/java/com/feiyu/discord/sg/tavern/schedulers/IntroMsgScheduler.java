@@ -91,8 +91,9 @@ public class IntroMsgScheduler {
         
         //adminChannel.sendMessage(message).complete();
         Member adminMember = guild.retrieveMemberById(valuesConfig.getAdminUserId()).complete();
+        log.info("Message sent to : {}", adminMember);
         PrivateChannel pc = adminMember.getUser().openPrivateChannel().complete();
-        pc.sendMessage(message).complete();
+        pc.sendMessage(message).queue();
         log.info("IntroMsgScheduler.introReminder End");
     }
 }

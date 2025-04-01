@@ -14,6 +14,9 @@ public class ValuesConfig {
     @Value("${introChannelId}")
     private String introChannelId;
     
+    @Value("${rulesChannelId}")
+    private String rulesChannelId;
+    
     @Value("${admin.bot.channel}")
     private String adminBotChannelId;
     
