@@ -14,3 +14,4 @@ Every 2 days or upon command, DM hammy with the members name who haven't do thei
 ### Server invite command
 `/invite` <br>
 DM the user the invite link for the discord server. Valid for 48 hours.
+

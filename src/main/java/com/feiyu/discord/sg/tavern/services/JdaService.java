@@ -2,6 +2,7 @@ package com.feiyu.discord.sg.tavern.services;
 
 import com.feiyu.discord.sg.tavern.commands.IntroCheckCommand;
 import com.feiyu.discord.sg.tavern.commands.InviteLinkCommand;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDABuilder;
@@ -17,6 +18,7 @@ public class JdaService {
     
     private final IntroCheckCommand introCheckCommand;
     private final InviteLinkCommand inviteLinkCommand;
+
     
     @Bean
     public net.dv8tion.jda.api.JDA jda(@Value("${discord.bot.token}") String token) throws InterruptedException {
