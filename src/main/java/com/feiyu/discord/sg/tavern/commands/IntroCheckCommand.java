@@ -27,9 +27,7 @@ public class IntroCheckCommand extends ListenerAdapter {
             //Send a message in response to the command being run
             event.reply("The result is sent in a PM to Hammy...").setEphemeral(true).queue();
             introMsgScheduler.introReminder();
+            log.info("IntroCheckCommand.introcheck : Done");
         }
     }
-
-
-
 }

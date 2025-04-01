@@ -28,8 +28,14 @@ public class CommandService {
         log.info("Inserting commands...");
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
         
+        // admin commands
         guild.upsertCommand("hammycheckintro", "Hammy runs a check to return a list of members without intro")
-                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+                .queue();
+        
+        // general commands
+        guild.upsertCommand("invite", "Get an invite link to this server (valid 48hrs)")
+                .setDefaultPermissions(DefaultMemberPermissions.ENABLED)
                 .queue();
         
         log.info("Finish insert commands");

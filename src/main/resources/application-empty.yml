@@ -2,17 +2,8 @@ spring.application.name: sg-tavern
 
 discord.bot.token:
 
-#dev
-# guildId: 786183069357834270
-
-# uat
-#guildId:
-#introChannelId:
-#admin.bot.channel:
-#adminUserId:
-
-#prod
 guildId:
 introChannelId:
+rulesChannelId:
 admin.bot.channel:
 adminUserId:
