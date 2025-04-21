@@ -1,9 +1,31 @@
-spring.application.name: sg-tavern
-
+spring:
+  application:
+    name:
+  datasource:
+    url:
+    username:
+    password:
+  jpa:
+    hibernate:
+      ddl-auto:
+      naming.physical-strategy:
+    show-sql:
+    properties:
+      hibernate:
+        dialect:
+    open-in-view:
 discord.bot.token:
 
 guildId:
-introChannelId:
-rulesChannelId:
-admin.bot.channel:
-adminUserId:
+
+userId:
+  owner:
+
+channelId:
+  intro:
+  rules:
+  admin-bot:
+
+role:
+  event-organiser:
+  new-joiner:

@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS new_joiner(
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    userId VARCHAR(48),
+    username VARCHAR(255),
+    joinDateTime TIMESTAMP
+);
