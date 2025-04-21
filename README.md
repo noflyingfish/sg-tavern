@@ -15,3 +15,6 @@ Every 2 days or upon command, DM hammy with the members name who haven't do thei
 `/invite` <br>
 DM the user the invite link for the discord server. Valid for 48 hours.
 
+### Auto role for newcomer
+Assign a role to all newcomers. Remove the newcomer role after 3 months. 
+

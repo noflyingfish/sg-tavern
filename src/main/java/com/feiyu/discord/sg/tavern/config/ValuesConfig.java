@@ -11,16 +11,19 @@ public class ValuesConfig {
     @Value("${guildId}")
     private String guildId;
     
-    @Value("${introChannelId}")
+    @Value("${channelId.intro}")
     private String introChannelId;
-    
-    @Value("${rulesChannelId}")
+    @Value("${channelId.rules}")
     private String rulesChannelId;
-    
-    @Value("${admin.bot.channel}")
+    @Value("${channelId.admin-bot}")
     private String adminBotChannelId;
     
-    @Value("${adminUserId}")
+    @Value("${userId.owner}")
     private String adminUserId;
+    
+    @Value("${roleId.event-organiser}")
+    private String eventOrganiserRoleId;
+    @Value("${roleId.new-joiner}")
+    private String newJoinerRoleId;
     
 }

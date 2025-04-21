@@ -27,7 +27,7 @@ public class IntroMsgScheduler {
     
     // Run every 2 days at 9 PM SGT
     @Async
-    @Scheduled(cron = "0 0 21 */2 * ?", zone = "Asia/Singapore")
+    @Scheduled(cron = "0 0 21 */3 * ?", zone = "Asia/Singapore")
     public void introReminder() {
         log.info("IntroMsgScheduler.introReminder Start");
         
