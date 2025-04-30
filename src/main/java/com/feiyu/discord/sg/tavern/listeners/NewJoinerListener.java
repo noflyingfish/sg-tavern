@@ -30,13 +30,13 @@ public class NewJoinerListener extends ListenerAdapter {
         
         NewJoinerEntity newJoinerEntity = NewJoinerEntity.builder()
                 .userId(user.getId())
-                .username(user.getEffectiveName())
+                .username(user.getName())
                 .joinDateTime(LocalDateTime.now())
                 .build();
         
         newJoinerRepository.save(newJoinerEntity);
         
-        log.info("New user joined and assigned new comer role : {} ", user.getEffectiveName());
+        log.info("New user joined and assigned newcomer role : {} ", user.getName());
         guild.addRoleToMember(user, newJoinerRole).queue();
     }
     
