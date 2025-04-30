@@ -1,5 +1,6 @@
 package com.feiyu.discord.sg.tavern.services;
 
+import com.feiyu.discord.sg.tavern.commands.GeMinigameCommand;
 import com.feiyu.discord.sg.tavern.commands.IntroCheckCommand;
 import com.feiyu.discord.sg.tavern.commands.InviteLinkCommand;
 
@@ -19,6 +20,7 @@ public class JdaService {
     
     private final IntroCheckCommand introCheckCommand;
     private final InviteLinkCommand inviteLinkCommand;
+    private final GeMinigameCommand geMinigameCommand;
     
     private final NewJoinerListener newJoinerListener;
     
@@ -30,6 +32,7 @@ public class JdaService {
                 .addEventListeners(introCheckCommand)
                 .addEventListeners(inviteLinkCommand)
                 .addEventListeners(newJoinerListener)
+                .addEventListeners(geMinigameCommand)
                 .build();
         
         // Optionally wait until the JDA instance is fully ready
