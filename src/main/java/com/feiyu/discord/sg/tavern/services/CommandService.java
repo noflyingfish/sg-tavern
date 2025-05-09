@@ -6,13 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -35,7 +32,7 @@ public class CommandService {
         
         // general commands
         guild.upsertCommand("invite", "Get an invite link to this server (valid 48hrs)")
-                .setDefaultPermissions(DefaultMemberPermissions.ENABLED)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.CREATE_INSTANT_INVITE))
                 .queue();
         
         log.info("Finish insert commands");

@@ -28,10 +28,11 @@ public class InviteLinkCommand extends ListenerAdapter {
             Member member = event.getMember();
             Guild guild = event.getGuild();
             TextChannel landingChannel = guild.getTextChannelById(valuesConfig.getRulesChannelId());
-            log.info("InviteLinkCommand.invitelink by : {}", member.getEffectiveName());
+            log.info("InviteLinkCommand.invitelink by : {}", member.getUser().getName());
             
             Invite invite = landingChannel.createInvite()
                     .setMaxAge(2L, TimeUnit.DAYS)
+                    .setMaxUses(1)
                     .setUnique(true)
                     .complete();
             
