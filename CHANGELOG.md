@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [1.1.3] - 2025-06-07
+### Added
+- Admin message to admin-bot channel on user join/exit
+
 ## [1.1.2] - 2025-05-09
 ### Fixes
 - Display name changes in the admin bot log
