@@ -3,6 +3,7 @@ package com.feiyu.discord.sg.tavern.services;
 import com.feiyu.discord.sg.tavern.commands.IntroCheckCommand;
 import com.feiyu.discord.sg.tavern.commands.InviteLinkCommand;
 
+import com.feiyu.discord.sg.tavern.listeners.MemberExitListener;
 import com.feiyu.discord.sg.tavern.listeners.NewJoinerListener;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class JdaService {
     private final InviteLinkCommand inviteLinkCommand;
     
     private final NewJoinerListener newJoinerListener;
+    private final MemberExitListener memberExitListener;
     
     @Bean
     public net.dv8tion.jda.api.JDA jda(@Value("${discord.bot.token}") String token) throws InterruptedException {
@@ -30,6 +32,7 @@ public class JdaService {
                 .addEventListeners(introCheckCommand)
                 .addEventListeners(inviteLinkCommand)
                 .addEventListeners(newJoinerListener)
+                .addEventListeners(memberExitListener)
                 .build();
         
         // Optionally wait until the JDA instance is fully ready

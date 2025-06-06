@@ -13,8 +13,13 @@ Every 2 days or upon command, DM hammy with the members name who haven't do thei
 
 ### Server invite command
 `/invite` <br>
-DM the user the invite link for the discord server. Valid for 48 hours.
+DM the user the invite link for the discord server. Valid for 48 hours. <br>
+Admin message when command used.
 
-### Auto role for newcomer
-Assign a role to all newcomers. Remove the newcomer role after 3 months. 
+### Guild Join
+Assign a role to all newcomers. Remove the newcomer role after 3 months. <br>
+Admin message when someone new enter server.
+
+### Guild Leave 
+Admin message when someone left the server.
 

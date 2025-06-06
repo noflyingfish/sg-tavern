@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.stereotype.Component;
@@ -36,8 +37,12 @@ public class NewJoinerListener extends ListenerAdapter {
         
         newJoinerRepository.save(newJoinerEntity);
         
-        log.info("New user joined and assigned newcomer role : {} ", user.getName());
+        log.info("Someone joined and assigned newcomer role : {} - {} ", user.getEffectiveName(), user.getName());
         guild.addRoleToMember(user, newJoinerRole).queue();
+        
+        String adminMessage = "Someone has joined the server : " + user.getEffectiveName() + " - " + user.getName();
+        TextChannel adminChannel = guild.getTextChannelById(valuesConfig.getAdminBotChannelId());
+        adminChannel.sendMessage(adminMessage).queue();
     }
     
 }
