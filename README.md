@@ -23,3 +23,6 @@ Admin message when someone new enter server.
 ### Guild Leave 
 Admin message when someone left the server.
 
+## Misc
+Admin message when a post created in upcoming-events channel
+

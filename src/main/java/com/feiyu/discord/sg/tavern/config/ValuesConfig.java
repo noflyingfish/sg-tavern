@@ -17,6 +17,8 @@ public class ValuesConfig {
     private String rulesChannelId;
     @Value("${channelId.admin-bot}")
     private String adminBotChannelId;
+    @Value("${channelId.upcoming-event}")
+    private String upcomingEventChannelId;
     
     @Value("${userId.owner}")
     private String adminUserId;
