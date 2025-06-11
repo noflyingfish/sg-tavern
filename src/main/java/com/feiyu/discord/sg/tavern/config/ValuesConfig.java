@@ -22,6 +22,8 @@ public class ValuesConfig {
     
     @Value("${userId.owner}")
     private String adminUserId;
+    @Value("${userId.dev}")
+    private String devUserId;
     
     @Value("${roleId.event-organiser}")
     private String eventOrganiserRoleId;

@@ -20,11 +20,13 @@ guildId:
 
 userId:
   owner:
+  dev:
 
 channelId:
   intro:
   rules:
   admin-bot:
+  upcoming-event:
 
 role:
   event-organiser:
