@@ -4,3 +4,16 @@ CREATE TABLE IF NOT EXISTS new_joiner(
     username VARCHAR(255),
     joinDateTime TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS event(
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    postName VARCHAR(255),
+    postId VARCHAR(255),
+    postUrl VARCHAR(255),
+    postStatus VARCHAR(255),
+    createdOn TIMESTAMP,
+    updatedOn TIMESTAMP,
+    processedEventName VARCHAR(255),
+    processedEventLocation VARCHAR(255),
+    processedEventDateTime TIMESTAMP
+);
