@@ -32,8 +32,8 @@ public class EventMonitorScheduler {
     // 4am daily
     @Async
     @Scheduled(cron = "0 0 4 * * ?", zone = "Asia/Singapore")
-    public void eventMonitorScheduler() {
-        log.info("EventMonitorScheduler.eventMonitorScheduler Start");
+    public void newEditedEventMonitorScheduler() {
+        log.info("EventMonitorScheduler.newEditedEventMonitorScheduler Start");
         
         // Get all the event posts
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
@@ -86,7 +86,26 @@ public class EventMonitorScheduler {
             PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();
             pc.sendMessage(message).queue();
         }
-        log.info("EventMonitorScheduler.eventMonitorScheduler End");
+        log.info("EventMonitorScheduler.newEditedEventMonitorScheduler End");
+    }
+    
+    // 1am daily
+    @Async
+    @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Singapore")
+    public void pastEventMonitorScheduler() {
+        log.info("EventMonitorScheduler.pastEventMonitorScheduler Start");
+        
+        List<EventEntity> managedEventList = eventRepository.findAllByPostStatus("MANAGED");
+        
+        for(EventEntity eventEntity: managedEventList){
+            if (eventEntity.getProcessedEventDateTime().isBefore(LocalDateTime.now())){
+                eventEntity.setPostStatus("PAST");
+                
+                eventRepository.save(eventEntity);
+                log.info("EventEntity has passed : {} ", eventEntity);
+            }
+        }
+        log.info("EventMonitorScheduler.pastEventMonitorScheduler End");
     }
     
     public void sendEventScheduler(){
