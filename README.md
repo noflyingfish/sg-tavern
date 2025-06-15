@@ -23,6 +23,16 @@ Admin message when someone new enter server.
 ### Guild Leave 
 Admin message when someone left the server.
 
-## Misc
+### Event postings
+Daily post to promote upcoming events.
+
+### Misc
 Admin message when a post created in upcoming-events channel
+
+### Scheduler Runtime
+0000 - Check newbie count/role <br>
+0100 - Check passed event <br>
+2100 (alt days) - Check intro done <br>
+2300 - Check new/edited event <br>
+
 

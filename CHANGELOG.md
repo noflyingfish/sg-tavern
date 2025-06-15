@@ -5,9 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [1.1.5d] - 2025-06-15
+### Added
+- Cutover the upcoming event schedules into #events-promo
+
+## [1.1.5c] - 2025-06-15
+### Added
+- Scheduler to post upcoming event schedules (testing, posting to mod only channel)
+
+## [1.1.5b] - 2025-06-13
+### Added
+- Scheduler to track and mark past event posts (if managed)
+
 ## [1.1.5a] - 2025-06-12
 ### Added
-- Scheduler to track event posts in #upcoming-events
+- Scheduler to track new/edited event posts in #upcoming-events
 
 ## [1.1.4] - 2025-06-11
 ### Added

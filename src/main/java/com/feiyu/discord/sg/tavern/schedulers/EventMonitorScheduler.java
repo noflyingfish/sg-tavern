@@ -5,18 +5,24 @@ import com.feiyu.discord.sg.tavern.entities.EventEntity;
 import com.feiyu.discord.sg.tavern.repositories.EventRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,11 +35,11 @@ public class EventMonitorScheduler {
     private final ValuesConfig valuesConfig;
     private final EventRepository eventRepository;
     
-    // 4am daily
+    // 11pm daily
     @Async
-    @Scheduled(cron = "0 0 4 * * ?", zone = "Asia/Singapore")
-    public void eventMonitorScheduler() {
-        log.info("EventMonitorScheduler.eventMonitorScheduler Start");
+    @Scheduled(cron = "0 0 23 * * ?", zone = "Asia/Singapore")
+    public void newEditedEventMonitorScheduler() {
+        log.info("EventMonitorScheduler.newEditedEventMonitorScheduler Start");
         
         // Get all the event posts
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
@@ -82,15 +88,76 @@ public class EventMonitorScheduler {
                     + "Updated posts : " + updateEventList.size();
             
             Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
-            log.info("Message sent to : {}", devMember);
+            log.info("Message sent to dev : {}", message);
             PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();
             pc.sendMessage(message).queue();
         }
-        log.info("EventMonitorScheduler.eventMonitorScheduler End");
+        log.info("EventMonitorScheduler.newEditedEventMonitorScheduler End");
     }
     
-    public void sendEventScheduler(){
+    // 1am daily
+    @Async
+    @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Singapore")
+    public void pastEventMonitorScheduler() {
+        log.info("EventMonitorScheduler.pastEventMonitorScheduler Start");
+        
+        List<EventEntity> managedEventList = eventRepository.findAllByPostStatus("MANAGED");
+        
+        for(EventEntity eventEntity: managedEventList){
+            if (eventEntity.getProcessedEventDateTime().isBefore(LocalDateTime.now())){
+                eventEntity.setPostStatus("PAST");
+                
+                eventRepository.save(eventEntity);
+                log.info("EventEntity has passed : {} ", eventEntity);
+            }
+        }
+        log.info("EventMonitorScheduler.pastEventMonitorScheduler End");
+    }
     
+    // 6am daily
+    @Async
+    @Scheduled(cron = "0 0 6 * * ?", zone = "Asia/Singapore")
+    public void sendEventScheduler(){
+        log.info("EventMonitorScheduler.sendEventScheduler Start");
+        
+        Guild guild = jda.getGuildById(valuesConfig.getGuildId());
+        List<EventEntity> managedEventList = eventRepository.findAllByPostStatus("MANAGED");
+        managedEventList.sort(Comparator.comparing(EventEntity::getProcessedEventDateTime));
+        
+        DateTimeFormatter df1 = DateTimeFormatter.ofPattern("dd-MMM-yyyy hh:mma");
+        DateTimeFormatter df2 = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
+        
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle("Tavern Outing Notices for " + LocalDateTime.now().format(df2));
+        eb.setDescription("----");
+        
+        int fieldCount = 0;
+        
+        for (EventEntity e : managedEventList){
+            eb.addField(e.getProcessedEventName() + " @ " + e.getProcessedEventLocation(),
+                            e.getProcessedEventDateTime().format(df1) + " " + e.getProcessedEventDateTime().getDayOfWeek() + "\n"
+                            + e.getPostUrl(),
+                    false);
+            
+            fieldCount++;
+            if(fieldCount == 25){ // each embed msg only can have max 25 fields.
+                log.info("Embed max count hit.");
+                break;
+            }
+        }
+        eb.setFooter("Still under testing...events might not be captured \n"
+                + "Any suggestion to this message please let Rain knows :)");
+        MessageEmbed me = eb.build();
+        
+        TextChannel adminChannel = guild.getTextChannelById(valuesConfig.getEventsPromoChannelId());
+        adminChannel.sendMessageEmbeds(me).queue();
+        
+//        Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
+//        log.info("Message sent to dev : {}", me);
+//        PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();
+//        pc.sendMessageEmbeds(me).queue();
+        
+        log.info("EventMonitorScheduler.sendEventScheduler End");
     }
     
 }
