@@ -129,6 +129,7 @@ public class EventMonitorScheduler {
         
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("Tavern Outing Notices for " + LocalDateTime.now().format(df2));
+        eb.setDescription("----");
         
         int fieldCount = 0;
         
@@ -144,11 +145,17 @@ public class EventMonitorScheduler {
                 break;
             }
         }
-        eb.setFooter("Any suggestion to this message please let <@!363365438765137930> know :)");
+        eb.setFooter("Still under testing...events might not be captured \n"
+                + "Any suggestion to this message please let Rain knows :)");
         MessageEmbed me = eb.build();
         
-        TextChannel adminChannel = guild.getTextChannelById(valuesConfig.getAdminBotChannelId());
+        TextChannel adminChannel = guild.getTextChannelById(valuesConfig.getEventsPromoChannelId());
         adminChannel.sendMessageEmbeds(me).queue();
+        
+//        Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
+//        log.info("Message sent to dev : {}", me);
+//        PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();
+//        pc.sendMessageEmbeds(me).queue();
         
         log.info("EventMonitorScheduler.sendEventScheduler End");
     }
