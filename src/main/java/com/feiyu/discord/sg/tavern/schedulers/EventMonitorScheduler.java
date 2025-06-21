@@ -2,7 +2,9 @@ package com.feiyu.discord.sg.tavern.schedulers;
 
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
 import com.feiyu.discord.sg.tavern.entities.EventEntity;
+import com.feiyu.discord.sg.tavern.entities.MessageEntity;
 import com.feiyu.discord.sg.tavern.repositories.EventRepository;
+import com.feiyu.discord.sg.tavern.repositories.MessageRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -34,6 +36,7 @@ public class EventMonitorScheduler {
     private final JDA jda;
     private final ValuesConfig valuesConfig;
     private final EventRepository eventRepository;
+    private final MessageRepository messageRepository;
     
     // 11pm daily
     @Async
@@ -49,14 +52,14 @@ public class EventMonitorScheduler {
         List<EventEntity> newEventList = new ArrayList<>();
         List<EventEntity> updateEventList = new ArrayList<>();
         
-        for(ThreadChannel post : eventPostList){
+        for (ThreadChannel post : eventPostList) {
             
             String postId = post.getId();
             String postName = post.getName();
             Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(postId);
             
             // new post
-            if(optionalEventEntity.isEmpty()){
+            if (optionalEventEntity.isEmpty()) {
                 EventEntity newEvent = EventEntity.builder()
                         .postId(postId)
                         .postName(postName)
@@ -71,8 +74,8 @@ public class EventMonitorScheduler {
             }
             
             // edited post (name only)
-            if(optionalEventEntity.isPresent() &&
-                    !post.getName().equals(optionalEventEntity.get().getPostName())){
+            if (optionalEventEntity.isPresent() &&
+                    !post.getName().equals(optionalEventEntity.get().getPostName())) {
                 
                 EventEntity editedEvent = optionalEventEntity.get();
                 editedEvent.setPostName(post.getName());
@@ -83,7 +86,7 @@ public class EventMonitorScheduler {
                 updateEventList.add(editedEvent);
             }
         }
-        if(!newEventList.isEmpty() || !updateEventList.isEmpty()) {
+        if (!newEventList.isEmpty() || !updateEventList.isEmpty()) {
             String message = "New posts : " + newEventList.size() + "\n"
                     + "Updated posts : " + updateEventList.size();
             
@@ -103,8 +106,8 @@ public class EventMonitorScheduler {
         
         List<EventEntity> managedEventList = eventRepository.findAllByPostStatus("MANAGED");
         
-        for(EventEntity eventEntity: managedEventList){
-            if (eventEntity.getProcessedEventDateTime().isBefore(LocalDateTime.now())){
+        for (EventEntity eventEntity : managedEventList) {
+            if (eventEntity.getProcessedEventDateTime().isBefore(LocalDateTime.now())) {
                 eventEntity.setPostStatus("PAST");
                 
                 eventRepository.save(eventEntity);
@@ -117,7 +120,7 @@ public class EventMonitorScheduler {
     // 6am daily
     @Async
     @Scheduled(cron = "0 0 6 * * ?", zone = "Asia/Singapore")
-    public void sendEventScheduler(){
+    public void sendEventScheduler() {
         log.info("EventMonitorScheduler.sendEventScheduler Start");
         
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
@@ -133,14 +136,14 @@ public class EventMonitorScheduler {
         
         int fieldCount = 0;
         
-        for (EventEntity e : managedEventList){
+        for (EventEntity e : managedEventList) {
             eb.addField(e.getProcessedEventName() + " @ " + e.getProcessedEventLocation(),
-                            e.getProcessedEventDateTime().format(df1) + " " + e.getProcessedEventDateTime().getDayOfWeek() + "\n"
+                    e.getProcessedEventDateTime().format(df1) + " " + e.getProcessedEventDateTime().getDayOfWeek() + "\n"
                             + e.getPostUrl(),
                     false);
             
             fieldCount++;
-            if(fieldCount == 25){ // each embed msg only can have max 25 fields.
+            if (fieldCount == 25) { // each embed msg only can have max 25 fields.
                 log.info("Embed max count hit.");
                 break;
             }
@@ -149,9 +152,26 @@ public class EventMonitorScheduler {
                 + "Any suggestion to this message please let Rain knows :)");
         MessageEmbed me = eb.build();
         
-        TextChannel adminChannel = guild.getTextChannelById(valuesConfig.getEventsPromoChannelId());
-        adminChannel.sendMessageEmbeds(me).queue();
+        TextChannel eventPromoChannel = guild.getTextChannelById(valuesConfig.getEventsPromoChannelId());
         
+        // send new message
+        Message m = eventPromoChannel.sendMessageEmbeds(me).complete();
+        
+        // remove old message
+        MessageEntity promoMessage = messageRepository.findTopByMessagePurpose("EventPromo").get();
+        if (promoMessage != null) {
+            eventPromoChannel.deleteMessageById(promoMessage.getMessageId()).queue();
+            promoMessage.setUpdatedOn(LocalDateTime.now());
+            promoMessage.setMessageId(m.getId());
+            messageRepository.save(promoMessage);
+        } else {
+            messageRepository.save(MessageEntity.builder()
+                    .messageId(m.getId())
+                    .messagePurpose("EventPromo")
+                    .createdOn(LocalDateTime.now())
+                    .build());
+        }
+
 //        Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
 //        log.info("Message sent to dev : {}", me);
 //        PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();

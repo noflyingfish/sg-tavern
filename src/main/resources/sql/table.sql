@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS new_joiner(
     joinDateTime TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS event(
+CREATE TABLE IF NOT EXISTS upcoming_event(
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     postName VARCHAR(255),
     postId VARCHAR(255),
@@ -16,4 +16,12 @@ CREATE TABLE IF NOT EXISTS event(
     processedEventName VARCHAR(255),
     processedEventLocation VARCHAR(255),
     processedEventDateTime TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS message_reference(
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    messageId VARCHAR(255),
+    messagePurpose VARCHAR(255),
+    createdOn TIMESTAMP,
+    updatedOn TIMESTAMP
 );
