@@ -17,6 +17,10 @@ import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -40,7 +44,8 @@ public class EventMonitorScheduler {
     
     // 11pm daily
     @Async
-    @Scheduled(cron = "0 0 23 * * ?", zone = "Asia/Singapore")
+//    @Scheduled(cron = "0 0 23 * * ?", zone = "Asia/Singapore")
+    @Scheduled(cron = "0 */3 * * * ?", zone = "Asia/Singapore")
     public void newEditedEventMonitorScheduler() {
         log.info("EventMonitorScheduler.newEditedEventMonitorScheduler Start");
         
@@ -69,7 +74,7 @@ public class EventMonitorScheduler {
                         .updatedOn(LocalDateTime.now())
                         .build();
                 
-                eventRepository.save(newEvent);
+                //eventRepository.save(newEvent);
                 newEventList.add(newEvent);
             }
             
@@ -82,13 +87,17 @@ public class EventMonitorScheduler {
                 editedEvent.setPostStatus("EDITED");
                 editedEvent.setUpdatedOn(LocalDateTime.now());
                 
-                eventRepository.save(editedEvent);
+                //eventRepository.save(editedEvent);
                 updateEventList.add(editedEvent);
             }
         }
         if (!newEventList.isEmpty() || !updateEventList.isEmpty()) {
-            String message = "New posts : " + newEventList.size() + "\n"
-                    + "Updated posts : " + updateEventList.size();
+            StringBuilder sb = new StringBuilder();
+            sb.append("New posts : ").append(newEventList.size()).append("\n");
+            newEventList.forEach(newEvent -> sb.append(newEvent.getPostUrl()).append("\n"));
+            sb.append("Updated posts : ").append(updateEventList.size()).append("\n");
+            updateEventList.forEach(updatedEvent -> sb.append(updatedEvent.getPostUrl()).append("\n"));
+            String message = sb.toString();
             
             Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
             log.info("Message sent to dev : {}", message);

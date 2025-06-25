@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 ## [1.1.5e] - 2025-06-21
+### Fixed
+- Paused intro check message to admin, due to message size too large
+- Reformated Bot message to dev to manage event
+- Included userid in member exit log to mod
+
+## [1.1.5e] - 2025-06-21
 ### Added
 - Deleting the previous day's upcoming event schedules upon new day's message
 
