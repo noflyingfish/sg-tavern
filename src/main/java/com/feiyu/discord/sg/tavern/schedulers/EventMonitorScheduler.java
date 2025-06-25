@@ -17,10 +17,6 @@ import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
-import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -44,8 +40,7 @@ public class EventMonitorScheduler {
     
     // 11pm daily
     @Async
-//    @Scheduled(cron = "0 0 23 * * ?", zone = "Asia/Singapore")
-    @Scheduled(cron = "0 */3 * * * ?", zone = "Asia/Singapore")
+    @Scheduled(cron = "0 0 23 * * ?", zone = "Asia/Singapore")
     public void newEditedEventMonitorScheduler() {
         log.info("EventMonitorScheduler.newEditedEventMonitorScheduler Start");
         
@@ -74,7 +69,7 @@ public class EventMonitorScheduler {
                         .updatedOn(LocalDateTime.now())
                         .build();
                 
-                //eventRepository.save(newEvent);
+                eventRepository.save(newEvent);
                 newEventList.add(newEvent);
             }
             
@@ -87,7 +82,7 @@ public class EventMonitorScheduler {
                 editedEvent.setPostStatus("EDITED");
                 editedEvent.setUpdatedOn(LocalDateTime.now());
                 
-                //eventRepository.save(editedEvent);
+                eventRepository.save(editedEvent);
                 updateEventList.add(editedEvent);
             }
         }
