@@ -31,6 +31,7 @@ public class NewEventOrganiserListener extends ListenerAdapter {
                     .getUser();
             Role eventOrganiserRole = guild.getRoleById(valuesConfig.getEventOrganiserRoleId());
             
+            
             guild.addRoleToMember(user, eventOrganiserRole).queue();
             
             String adminMessage =  user.getEffectiveName() + " - " + user.getName() + " has posted an event : \n"

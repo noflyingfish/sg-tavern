@@ -1,5 +1,6 @@
 package com.feiyu.discord.sg.tavern.services;
 
+import com.feiyu.discord.sg.tavern.commands.EventCommand;
 import com.feiyu.discord.sg.tavern.commands.IntroCheckCommand;
 import com.feiyu.discord.sg.tavern.commands.InviteLinkCommand;
 
@@ -21,6 +22,7 @@ public class JdaService {
     
     private final IntroCheckCommand introCheckCommand;
     private final InviteLinkCommand inviteLinkCommand;
+    private final EventCommand eventCommand;
     
     private final NewJoinerListener newJoinerListener;
     private final MemberExitListener memberExitListener;
@@ -34,6 +36,7 @@ public class JdaService {
                 .setEventPassthrough(true)
                 .addEventListeners(introCheckCommand)
                 .addEventListeners(inviteLinkCommand)
+                .addEventListeners(eventCommand)
                 .addEventListeners(newJoinerListener)
                 .addEventListeners(memberExitListener)
                 .addEventListeners(newEventOrganiserListener)
