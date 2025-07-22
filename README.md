@@ -16,6 +16,10 @@ Every 2 days or upon command, DM hammy with the members name who haven't do thei
 DM the user the invite link for the discord server. Valid for 48 hours. <br>
 Admin message when command used.
 
+### Server Colour Role
+`/colour csscode` <br>
+Change the user's discord name colour. <br>
+
 ### Guild Join
 Assign a role to all newcomers. Remove the newcomer role after 3 months. <br>
 Admin message when someone new enter server.

@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -30,9 +31,16 @@ public class CommandService {
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
                 .queue();
         
-        // general commands
+        // mod commands
         guild.upsertCommand("invite", "Get an invite link to this server (valid 48hrs)")
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.CREATE_INSTANT_INVITE))
+                .queue();
+        
+        // general commands
+        guild.upsertCommand("colour", "Change your name colour (CSS code eg. #FFFFFF) / \"random\"")
+                .addOption(OptionType.STRING, "colour", "CSS code or random", true)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
+                
                 .queue();
         
         log.info("Finish insert commands");

@@ -54,5 +54,6 @@ public class NewJoinerScheduler {
                 log.error("Error at retrieving member with {}", newbie);
             }
         }
+        log.info("NewJoinerScheduler.updateNewbieScheduler End");
     }
 }
