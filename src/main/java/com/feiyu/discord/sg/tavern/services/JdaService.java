@@ -3,9 +3,10 @@ package com.feiyu.discord.sg.tavern.services;
 import com.feiyu.discord.sg.tavern.commands.IntroCheckCommand;
 import com.feiyu.discord.sg.tavern.commands.InviteLinkCommand;
 
+import com.feiyu.discord.sg.tavern.commands.RoleColourCommand;
 import com.feiyu.discord.sg.tavern.listeners.MemberExitListener;
 import com.feiyu.discord.sg.tavern.listeners.NewEventOrganiserListener;
-import com.feiyu.discord.sg.tavern.listeners.NewJoinerListener;
+import com.feiyu.discord.sg.tavern.listeners.MemberJoinListener;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDABuilder;
@@ -21,8 +22,9 @@ public class JdaService {
     
     private final IntroCheckCommand introCheckCommand;
     private final InviteLinkCommand inviteLinkCommand;
+    private final RoleColourCommand roleColourCommand;
     
-    private final NewJoinerListener newJoinerListener;
+    private final MemberJoinListener newJoinerListener;
     private final MemberExitListener memberExitListener;
     private final NewEventOrganiserListener newEventOrganiserListener;
     
@@ -32,8 +34,11 @@ public class JdaService {
         net.dv8tion.jda.api.JDA jda = JDABuilder.createDefault(token)
                 .enableIntents(GatewayIntent.GUILD_MEMBERS)
                 .setEventPassthrough(true)
+                //commands
                 .addEventListeners(introCheckCommand)
                 .addEventListeners(inviteLinkCommand)
+                .addEventListeners(roleColourCommand)
+                // listeners
                 .addEventListeners(newJoinerListener)
                 .addEventListeners(memberExitListener)
                 .addEventListeners(newEventOrganiserListener)

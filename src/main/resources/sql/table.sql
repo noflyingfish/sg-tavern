@@ -25,3 +25,12 @@ CREATE TABLE IF NOT EXISTS message_reference(
     createdOn TIMESTAMP,
     updatedOn TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS role_colour(
+    userId VARCHAR(48) PRIMARY KEY,
+    username VARCHAR(255),
+    colourCode VARCHAR(8),
+    roleId VARCHAR(48),
+    randomFlag VARCHAR(1),
+    updatedOn TIMESTAMP
+);

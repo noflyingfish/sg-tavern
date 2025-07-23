@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @Component
 @AllArgsConstructor
-public class NewJoinerListener extends ListenerAdapter {
+public class MemberJoinListener extends ListenerAdapter {
     
     private final ValuesConfig valuesConfig;
     private final NewJoinerRepository newJoinerRepository;

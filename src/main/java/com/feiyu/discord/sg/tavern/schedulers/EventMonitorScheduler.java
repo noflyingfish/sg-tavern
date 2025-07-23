@@ -87,8 +87,12 @@ public class EventMonitorScheduler {
             }
         }
         if (!newEventList.isEmpty() || !updateEventList.isEmpty()) {
-            String message = "New posts : " + newEventList.size() + "\n"
-                    + "Updated posts : " + updateEventList.size();
+            StringBuilder sb = new StringBuilder();
+            sb.append("New posts : ").append(newEventList.size()).append("\n");
+            newEventList.forEach(newEvent -> sb.append(newEvent.getPostUrl()).append("\n"));
+            sb.append("Updated posts : ").append(updateEventList.size()).append("\n");
+            updateEventList.forEach(updatedEvent -> sb.append(updatedEvent.getPostUrl()).append("\n"));
+            String message = sb.toString();
             
             Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
             log.info("Message sent to dev : {}", message);

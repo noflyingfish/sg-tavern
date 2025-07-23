@@ -33,5 +33,7 @@ public class ValuesConfig {
     private String eventOrganiserRoleId;
     @Value("${roleId.new-joiner}")
     private String newJoinerRoleId;
+    @Value("${roleId.name-colour-anchor}")
+    private String nameColourAnchorRoleId;
     
 }
