@@ -22,7 +22,8 @@ public class MemberExitListener extends ListenerAdapter {
         Guild guild = event.getGuild();
         User user = event.getUser();
         
-        String adminMessage = "Someone has left the server : " + user.getEffectiveName() + " - " + user.getName();
+        String adminMessage = "Someone has left the server : "
+                + user.getEffectiveName() + " - " + user.getName() + " - " + user.getId();
         log.info(adminMessage);
         TextChannel adminChannel = guild.getTextChannelById(valuesConfig.getAdminBotChannelId());
         adminChannel.sendMessage(adminMessage).queue();

@@ -55,7 +55,7 @@ public class RoleColourCommand extends ListenerAdapter {
             color = new Color(red, green, blue);
             
             Role newRole = createAddChosenColour(event, color, cssInput);
-            roleCleanUp(event);
+            roleCleanUp(event, newRole);
             updateDatabase(event, newRole);
             
             event.getHook().sendMessage("Done :)").queue();
@@ -96,15 +96,19 @@ public class RoleColourCommand extends ListenerAdapter {
         }
     }
     
-    private void roleCleanUp(SlashCommandInteractionEvent event) {
+    private void roleCleanUp(SlashCommandInteractionEvent event, Role newRole) {
         Guild guild = event.getGuild();
         Optional<RoleColourEntity> existingUserOptional = roleColourRepository.findById(event.getUser().getId());
-        // user has existing role
-        if (existingUserOptional.isPresent()) {
+        // user has existing role && existing role not same as new role
+        if (existingUserOptional.isPresent() &&
+                !newRole.getId().equals(existingUserOptional.get().getRoleId())) {
+            log.info("RoleColourEntity : {}", existingUserOptional.get());
             RoleColourEntity entity = existingUserOptional.get();
             Role previousColourRole = guild.getRoleById(entity.getRoleId());
+            //remove previous colour role
             guild.removeRoleFromMember(event.getUser(),previousColourRole).complete();
             log.info("Removed old colour role from user : {}", previousColourRole.getName());
+            //remove role from guild if no ppl
             guild.findMembersWithRoles(previousColourRole).onSuccess(members -> {
                 if (members.isEmpty()) {
                     previousColourRole.delete().complete();
