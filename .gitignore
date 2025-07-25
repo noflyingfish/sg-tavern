@@ -34,3 +34,6 @@ build/
 
 ## remove ppi from github ###
 application.yml
+
+## local logs
+/logs/
