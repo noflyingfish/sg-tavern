@@ -4,9 +4,7 @@ import com.feiyu.discord.sg.tavern.commands.IntroCheckCommand;
 import com.feiyu.discord.sg.tavern.commands.InviteLinkCommand;
 
 import com.feiyu.discord.sg.tavern.commands.RoleColourCommand;
-import com.feiyu.discord.sg.tavern.listeners.MemberExitListener;
-import com.feiyu.discord.sg.tavern.listeners.NewEventOrganiserListener;
-import com.feiyu.discord.sg.tavern.listeners.MemberJoinListener;
+import com.feiyu.discord.sg.tavern.listeners.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDABuilder;
@@ -27,12 +25,14 @@ public class JdaService {
     private final MemberJoinListener newJoinerListener;
     private final MemberExitListener memberExitListener;
     private final NewEventOrganiserListener newEventOrganiserListener;
+    private final EventTitleChangeListener eventTitleChangeListener;
+    private final EventDetailsMessageListener eventDetailsMessageListener;
     
     @Bean
     public net.dv8tion.jda.api.JDA jda(@Value("${discord.bot.token}") String token) throws InterruptedException {
         // Create and configure the JDA instance
         net.dv8tion.jda.api.JDA jda = JDABuilder.createDefault(token)
-                .enableIntents(GatewayIntent.GUILD_MEMBERS)
+                .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT)
                 .setEventPassthrough(true)
                 //commands
                 .addEventListeners(introCheckCommand)
@@ -42,6 +42,8 @@ public class JdaService {
                 .addEventListeners(newJoinerListener)
                 .addEventListeners(memberExitListener)
                 .addEventListeners(newEventOrganiserListener)
+                .addEventListeners(eventTitleChangeListener)
+                .addEventListeners(eventDetailsMessageListener)
                 .build();
 
         // Optionally wait until the JDA instance is fully ready

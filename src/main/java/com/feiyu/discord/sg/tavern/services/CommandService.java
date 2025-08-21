@@ -40,7 +40,6 @@ public class CommandService {
         guild.upsertCommand("colour", "Change your name colour (CSS code eg. #FFFFFF) / \"random\"")
                 .addOption(OptionType.STRING, "colour", "CSS code or random", true)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
-                
                 .queue();
         
         log.info("Finish insert commands");

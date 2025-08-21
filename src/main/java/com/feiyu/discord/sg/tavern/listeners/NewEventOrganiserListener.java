@@ -21,6 +21,8 @@ public class NewEventOrganiserListener extends ListenerAdapter {
     
     @Override
     public void onChannelCreate(ChannelCreateEvent event) {
+        
+        //check for channel to be public thread in the correct channel
         if (ChannelType.GUILD_PUBLIC_THREAD.equals(event.getChannelType()) &&
                 valuesConfig.getUpcomingEventChannelId().equals(
                         event.getChannel().asThreadChannel().getParentChannel().getId())) {
