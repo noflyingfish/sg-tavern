@@ -107,16 +107,23 @@ public class EventMonitorScheduler {
     @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Singapore")
     public void pastEventMonitorScheduler() {
         log.info("EventMonitorScheduler.pastEventMonitorScheduler Start");
-        
+        Guild guild = jda.getGuildById(valuesConfig.getGuildId());
         List<EventEntity> managedEventList = eventRepository.findAllByPostStatus("MANAGED");
         
         for (EventEntity eventEntity : managedEventList) {
+            
+            // deleted event post
+            if(guild.getThreadChannelById(eventEntity.getPostId()) == null){
+                eventEntity.setPostStatus("DELETED");
+                log.info("EventEntity DELETED : {} ", eventEntity);
+            }
+            
+            // past event posts
             if (eventEntity.getProcessedEventDateTime().isBefore(LocalDateTime.now())) {
                 eventEntity.setPostStatus("PAST");
-                
-                eventRepository.save(eventEntity);
-                log.info("EventEntity has passed : {} ", eventEntity);
+                log.info("EventEntity PAST : {} ", eventEntity);
             }
+            eventRepository.save(eventEntity);
         }
         log.info("EventMonitorScheduler.pastEventMonitorScheduler End");
     }
