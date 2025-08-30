@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [1.2.2] - 2025-08-30
 ### Fixes
-- Deleted event post still saved in promo message
+- Deleted event post removed from promo message
 
 ## [1.2.1] - 2025-07-26
 ### Added
