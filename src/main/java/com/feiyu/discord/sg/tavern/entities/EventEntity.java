@@ -25,7 +25,7 @@ public class EventEntity {
     String postUrl;
     
     // for admin usage, entity meta data
-    String postStatus;  // NEW / EDITED / MANAGED / PAST / CANCELLED / TBC
+    String postStatus;  // NEW / EDITED / MANAGED / PAST / CANCELLED / TBC / DELETED
     LocalDateTime createdOn;
     LocalDateTime updatedOn;
     
