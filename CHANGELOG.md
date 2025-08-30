@@ -4,10 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
----
-## [1.2.1] - 2025-08-30
+## [1.2.2] - 2025-08-30
 ### Fixes
-- Deleted event post still saved in promo message
+- Deleted event post removed from promo message
+
+## [1.2.1] - 2025-07-26
+### Added
+- Bug fix to `/colour` command
+- Stop sending intro check message to admin
+- Attempt to listen to message in #upcoming-events with datetime
 
 ## [1.2.0] - 2025-07-26
 ### Fixes

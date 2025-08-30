@@ -29,38 +29,41 @@ public class RoleColourCommand extends ListenerAdapter {
     
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        String cssInput = event.getOption("colour").getAsString().toUpperCase();
-        Color color;
         
-        // Create colour string
-        if ("random".equalsIgnoreCase(cssInput)) {
-            Random random = new Random();
-            int red = random.nextInt(256);
-            int green = random.nextInt(256);
-            int blue = random.nextInt(256);
-            // Hexadecimal Formatting with zero padding
-            color = new Color(red, green, blue);
-            log.info("Random colour role : {}", event.getUser().getName());
+        if ("colour".equals(event.getName())) {
+            String cssInput = event.getOption("colour").getAsString().toUpperCase();
+            Color color;
             
-            event.reply("This is still work in progress OTL").setEphemeral(true).queue();
-            // createRandomColourRole(event, color, cssInput);
-        } else if (cssInput.matches("^#([A-Fa-f0-9]{6})$")) {
-            // deferReply used cuz operation >3s
-            event.deferReply(true).queue();
-            
-            log.info("Input colour : {}, User : {} ", cssInput, event.getUser().getName());
-            int red = Integer.parseInt(cssInput.substring(1, 3), 16);
-            int green = Integer.parseInt(cssInput.substring(3, 5), 16);
-            int blue = Integer.parseInt(cssInput.substring(5, 7), 16);
-            color = new Color(red, green, blue);
-            
-            Role newRole = createAddChosenColour(event, color, cssInput);
-            roleCleanUp(event, newRole);
-            updateDatabase(event, newRole);
-            
-            event.getHook().sendMessage("Done :)").queue();
-        } else {
-            event.reply("Please enter a valid CSS code").setEphemeral(true).queue();
+            // Create colour string
+            if ("random".equalsIgnoreCase(cssInput)) {
+                Random random = new Random();
+                int red = random.nextInt(256);
+                int green = random.nextInt(256);
+                int blue = random.nextInt(256);
+                // Hexadecimal Formatting with zero padding
+                color = new Color(red, green, blue);
+                log.info("Random colour role : {}", event.getUser().getName());
+                
+                event.reply("This is still work in progress OTL").setEphemeral(true).queue();
+                // createRandomColourRole(event, color, cssInput);
+            } else if (cssInput.matches("^#([A-Fa-f0-9]{6})$")) {
+                // deferReply used cuz operation >3s
+                event.deferReply(true).queue();
+                
+                log.info("Input colour : {}, User : {} ", cssInput, event.getUser().getName());
+                int red = Integer.parseInt(cssInput.substring(1, 3), 16);
+                int green = Integer.parseInt(cssInput.substring(3, 5), 16);
+                int blue = Integer.parseInt(cssInput.substring(5, 7), 16);
+                color = new Color(red, green, blue);
+                
+                Role newRole = createAddChosenColour(event, color, cssInput);
+                roleCleanUp(event, newRole);
+                updateDatabase(event, newRole);
+                
+                event.getHook().sendMessage("Done :)").queue();
+            } else {
+                event.reply("Please enter a valid CSS code").setEphemeral(true).queue();
+            }
         }
     }
     
@@ -106,7 +109,7 @@ public class RoleColourCommand extends ListenerAdapter {
             RoleColourEntity entity = existingUserOptional.get();
             Role previousColourRole = guild.getRoleById(entity.getRoleId());
             //remove previous colour role
-            guild.removeRoleFromMember(event.getUser(),previousColourRole).complete();
+            guild.removeRoleFromMember(event.getUser(), previousColourRole).complete();
             log.info("Removed old colour role from user : {}", previousColourRole.getName());
             //remove role from guild if no ppl
             guild.findMembersWithRoles(previousColourRole).onSuccess(members -> {
