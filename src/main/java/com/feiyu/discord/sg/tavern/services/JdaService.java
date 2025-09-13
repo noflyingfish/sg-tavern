@@ -1,5 +1,6 @@
 package com.feiyu.discord.sg.tavern.services;
 
+import com.feiyu.discord.sg.tavern.commands.EventManagementCommand;
 import com.feiyu.discord.sg.tavern.commands.IntroCheckCommand;
 import com.feiyu.discord.sg.tavern.commands.InviteLinkCommand;
 
@@ -21,6 +22,7 @@ public class JdaService {
     private final IntroCheckCommand introCheckCommand;
     private final InviteLinkCommand inviteLinkCommand;
     private final RoleColourCommand roleColourCommand;
+    private final EventManagementCommand eventManagementCommand;
     
     private final MemberJoinListener newJoinerListener;
     private final MemberExitListener memberExitListener;
@@ -38,6 +40,7 @@ public class JdaService {
                 .addEventListeners(introCheckCommand)
                 .addEventListeners(inviteLinkCommand)
                 .addEventListeners(roleColourCommand)
+                .addEventListeners(eventManagementCommand)
                 // listeners
                 .addEventListeners(newJoinerListener)
                 .addEventListeners(memberExitListener)
@@ -45,7 +48,7 @@ public class JdaService {
                 .addEventListeners(eventTitleChangeListener)
                 .addEventListeners(eventDetailsMessageListener)
                 .build();
-
+        
         // Optionally wait until the JDA instance is fully ready
         jda.awaitReady();
         return jda;
