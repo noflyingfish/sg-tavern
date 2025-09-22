@@ -60,6 +60,9 @@ public class CommandService {
                 .addOption(OptionType.STRING, "colour", "CSS code or random", true)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
                 .queue();
+        guild.upsertCommand("allthreads", "List out all the existing channels. and threads")
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
+                .queue();
         
         log.info("Finish insert commands");
     }

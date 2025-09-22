@@ -1,6 +1,6 @@
 spring:
   application:
-    name:
+    name: sg-tavern
   datasource:
     url:
     username:
@@ -21,6 +21,7 @@ guildId:
 userId:
   owner:
   dev:
+  bot:
 
 channelId:
   intro:
@@ -28,6 +29,13 @@ channelId:
   admin-bot:
   upcoming-event:
 
-role:
+private:
+  channels:
+    -
+  threads:
+    -
+
+roleId:
   event-organiser:
   new-joiner:
+  name-colour-anchor:
