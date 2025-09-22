@@ -143,7 +143,7 @@ public class EventMonitorScheduler {
         
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("Tavern Outing Notices for " + LocalDateTime.now().format(df2));
-        eb.setDescription("----");
+        eb.setDescription("Please follow the template here for new posts : " + valuesConfig.getEventTemplate() +"\n");
         
         int fieldCount = 0;
         

@@ -2,10 +2,15 @@ package com.feiyu.discord.sg.tavern.config;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Configuration
+@ConfigurationProperties
 public class ValuesConfig {
     
     @Value("${guildId}")
@@ -36,4 +41,7 @@ public class ValuesConfig {
     @Value("${roleId.name-colour-anchor}")
     private String nameColourAnchorRoleId;
     
+    
+    @Value("${post.event-template}")
+    private String eventTemplate;
 }

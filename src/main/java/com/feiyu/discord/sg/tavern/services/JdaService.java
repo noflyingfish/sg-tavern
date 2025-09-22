@@ -1,10 +1,7 @@
 package com.feiyu.discord.sg.tavern.services;
 
-import com.feiyu.discord.sg.tavern.commands.EventManagementCommand;
-import com.feiyu.discord.sg.tavern.commands.IntroCheckCommand;
-import com.feiyu.discord.sg.tavern.commands.InviteLinkCommand;
+import com.feiyu.discord.sg.tavern.commands.*;
 
-import com.feiyu.discord.sg.tavern.commands.RoleColourCommand;
 import com.feiyu.discord.sg.tavern.listeners.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +20,7 @@ public class JdaService {
     private final InviteLinkCommand inviteLinkCommand;
     private final RoleColourCommand roleColourCommand;
     private final EventManagementCommand eventManagementCommand;
+    private final ThreadsListAllCommand threadsListAllCommand;
     
     private final MemberJoinListener newJoinerListener;
     private final MemberExitListener memberExitListener;
@@ -41,6 +39,7 @@ public class JdaService {
                 .addEventListeners(inviteLinkCommand)
                 .addEventListeners(roleColourCommand)
                 .addEventListeners(eventManagementCommand)
+                .addEventListeners(threadsListAllCommand)
                 // listeners
                 .addEventListeners(newJoinerListener)
                 .addEventListeners(memberExitListener)
