@@ -30,12 +30,15 @@ public class EventTitleChangeListener extends ListenerAdapter {
         if (ChannelType.GUILD_PUBLIC_THREAD.equals(event.getChannelType()) &&
                 valuesConfig.getUpcomingEventChannelId().equals(
                         event.getChannel().asThreadChannel().getParentChannel().getId())) {
-            log.info("Event title changed : [{}] to [{}]", event.getOldValue() , event.getNewValue());
+            
             EmbedBuilder eb = new EmbedBuilder();
             eb.setDescription("Post your event after the title change for it to be captured by the bot :)");
             eb.setFooter("Work-in-progress");
             MessageEmbed me = eb.build();
             Message m = event.getChannel().asThreadChannel().sendMessageEmbeds(me).complete();
+            
+            log.info("Event title changed : [{}] to [{}]", event.getOldValue() , event.getNewValue());
+            
             // Schedule the deletion for 60 seconds later
             CompletableFuture.delayedExecutor(60, TimeUnit.SECONDS)
                     .execute(() -> m.delete().queue());
