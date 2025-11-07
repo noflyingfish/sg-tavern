@@ -59,19 +59,19 @@ public class EventMonitorScheduler {
             Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(postId);
             
             // new post
-            if (optionalEventEntity.isEmpty()) {
-                EventEntity newEvent = EventEntity.builder()
-                        .postId(postId)
-                        .postName(postName)
-                        .postUrl(post.getJumpUrl())
-                        .postStatus("NEW")
-                        .createdOn(LocalDateTime.now())
-                        .updatedOn(LocalDateTime.now())
-                        .build();
-                
-                eventRepository.save(newEvent);
-                newEventList.add(newEvent);
-            }
+//            if (optionalEventEntity.isEmpty()) {
+//                EventEntity newEvent = EventEntity.builder()
+//                        .postId(postId)
+//                        .postName(postName)
+//                        .postUrl(post.getJumpUrl())
+//                        .postStatus("NEW")
+//                        .createdOn(LocalDateTime.now())
+//                        .updatedOn(LocalDateTime.now())
+//                        .build();
+//
+//                eventRepository.save(newEvent);
+//                newEventList.add(newEvent);
+//            }
             
             // edited post (name only)
             if (optionalEventEntity.isPresent() &&

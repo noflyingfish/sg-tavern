@@ -4,10 +4,17 @@ import com.feiyu.discord.sg.tavern.config.ValuesConfig;
 import com.feiyu.discord.sg.tavern.utils.RegexUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateNameEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.stereotype.Component;
+
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -23,12 +30,18 @@ public class EventTitleChangeListener extends ListenerAdapter {
         if (ChannelType.GUILD_PUBLIC_THREAD.equals(event.getChannelType()) &&
                 valuesConfig.getUpcomingEventChannelId().equals(
                         event.getChannel().asThreadChannel().getParentChannel().getId())) {
-        
-            String title = event.getNewValue();
-            if(RegexUtil.containTime(title) && RegexUtil.containDate(title)){
-                log.info("TEST - datetime detection - title ====");
-                log.info(title);
-            }
+            
+            EmbedBuilder eb = new EmbedBuilder();
+            eb.setDescription("Post your event after the title change for it to be captured by the bot :)");
+            eb.setFooter("Work-in-progress");
+            MessageEmbed me = eb.build();
+            Message m = event.getChannel().asThreadChannel().sendMessageEmbeds(me).complete();
+            
+            log.info("Event title changed : [{}] to [{}]", event.getOldValue() , event.getNewValue());
+            
+            // Schedule the deletion for 60 seconds later
+            CompletableFuture.delayedExecutor(60, TimeUnit.SECONDS)
+                    .execute(() -> m.delete().queue());
         }
     }
     

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-11-08
+### Added
+- Manage new event post creation on event basis, instead of scheduler
+- A reminder message after event post title change
+
 ## [1.4.0] - 2025-09-23
 ### Added
 - `/allthreads` to show all public channel and threads
