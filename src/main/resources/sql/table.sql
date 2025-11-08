@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS upcoming_event(
     postId VARCHAR(255),
     postUrl VARCHAR(255),
     postStatus VARCHAR(255),
+    eventDetailMsgId VARCHAR(255),
     createdOn TIMESTAMP,
     updatedOn TIMESTAMP,
     processedEventName VARCHAR(255),
