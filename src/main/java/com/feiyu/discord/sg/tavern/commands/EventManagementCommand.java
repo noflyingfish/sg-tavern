@@ -138,10 +138,6 @@ public class EventManagementCommand extends ListenerAdapter {
                 }
             }
             
-        } else{
-            event.reply("Command not used in #upcoming-events")
-                    .setEphemeral(true)
-                    .queue();
         }
     }
 }
