@@ -62,6 +62,12 @@ public class EventManagementCommand extends ListenerAdapter {
                             eventEntity.getProcessedEventDateTime() != null
                                     ? eventEntity.getProcessedEventDateTime().toString() : "",
                             false);
+                    eb.addField("Event Detail Post",
+                            eventEntity.getEventDetailMsgId() != null ? event.getChannel().asThreadChannel()
+                                    .retrieveMessageById(eventEntity.getEventDetailMsgId())
+                                    .complete()
+                                    .getJumpUrl() : "",
+                            false);
                     MessageEmbed me = eb.build();
                     
                     event.replyEmbeds(me)
@@ -80,7 +86,6 @@ public class EventManagementCommand extends ListenerAdapter {
                             .setEphemeral(true)
                             .queue();
                 } else {
-                    log.info("Manage Event : {}", event);
                     EventEntity eventEntity = optionalEventEntity.get();
                     
                     OptionMapping processedEventName = event.getOption("eventname");

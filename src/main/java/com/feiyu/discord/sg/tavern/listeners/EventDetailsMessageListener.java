@@ -40,7 +40,7 @@ public class EventDetailsMessageListener extends ListenerAdapter {
                 
                 if (eventEntityOptional.isEmpty()) {
                     log.error("Event is not tracked");
-                } else {
+                } else if (eventEntityOptional.get().getEventDetailMsgId() == null) {
                     EventEntity eventEntity = eventEntityOptional.get();
                     eventEntity.setEventDetailMsgId(event.getMessage().getId());
                     eventEntity.setUpdatedOn(LocalDateTime.now());
