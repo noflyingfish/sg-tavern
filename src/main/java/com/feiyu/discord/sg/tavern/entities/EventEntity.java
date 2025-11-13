@@ -23,6 +23,7 @@ public class EventEntity {
     String postName;
     String postId;
     String postUrl;
+    String eventDetailMsgId;
     
     // for admin usage, entity meta data
     String postStatus;  // NEW / EDITED / MANAGED / PAST / CANCELLED / TBC / DELETED

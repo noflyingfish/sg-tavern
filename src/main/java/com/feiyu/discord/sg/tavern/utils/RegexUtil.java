@@ -18,7 +18,7 @@ public class RegexUtil {
             // DD/MM/YYYY or DD-MM-YYYY: 1/1/1990, 25/12/2023, 15-01-2024
             "(?:0?[1-9]|[12]\\d|3[01])[/\\-](?:0?[1-9]|1[0-2])[/\\-]\\d{4}" + "|" +
             // DD MMM format: 1 jan, 25 Dec, 05 Jan 2023, 5 March, 15 Mar 2025
-            "(?:0?[1-9]|[12]\\d|3[01])\\s?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]{0,6}(?:\\s?\\d{4})?" + ")\\b";
+            "(?i)(?:0?[1-9]|[12]\\d|3[01])\\s?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]{0,6}(?:\\s?\\d{4})?" + ")\\b";
     
     
     public static boolean containTime(String text) {

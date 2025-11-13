@@ -43,49 +43,11 @@ public class EventMonitorScheduler {
     @Scheduled(cron = "0 0 23 * * ?", zone = "Asia/Singapore")
     public void newEditedEventMonitorScheduler() {
         log.info("EventMonitorScheduler.newEditedEventMonitorScheduler Start");
-        
-        // Get all the event posts
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
-        ForumChannel upcomingEventForum = guild.getForumChannelById(valuesConfig.getUpcomingEventChannelId());
-        List<ThreadChannel> eventPostList = upcomingEventForum.getThreadChannels();
         
-        List<EventEntity> newEventList = new ArrayList<>();
-        List<EventEntity> updateEventList = new ArrayList<>();
+        List<EventEntity> newEventList = eventRepository.findAllByPostStatus("NEW");
+        List<EventEntity> updateEventList = eventRepository.findAllByPostStatus("EDITED");
         
-        for (ThreadChannel post : eventPostList) {
-            
-            String postId = post.getId();
-            String postName = post.getName();
-            Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(postId);
-            
-            // new post
-//            if (optionalEventEntity.isEmpty()) {
-//                EventEntity newEvent = EventEntity.builder()
-//                        .postId(postId)
-//                        .postName(postName)
-//                        .postUrl(post.getJumpUrl())
-//                        .postStatus("NEW")
-//                        .createdOn(LocalDateTime.now())
-//                        .updatedOn(LocalDateTime.now())
-//                        .build();
-//
-//                eventRepository.save(newEvent);
-//                newEventList.add(newEvent);
-//            }
-            
-            // edited post (name only)
-            if (optionalEventEntity.isPresent() &&
-                    !post.getName().equals(optionalEventEntity.get().getPostName())) {
-                
-                EventEntity editedEvent = optionalEventEntity.get();
-                editedEvent.setPostName(post.getName());
-                editedEvent.setPostStatus("EDITED");
-                editedEvent.setUpdatedOn(LocalDateTime.now());
-                
-                eventRepository.save(editedEvent);
-                updateEventList.add(editedEvent);
-            }
-        }
         if (!newEventList.isEmpty() || !updateEventList.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             sb.append("New posts : ").append(newEventList.size()).append("\n");
