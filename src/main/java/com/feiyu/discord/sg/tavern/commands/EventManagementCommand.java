@@ -103,7 +103,7 @@ public class EventManagementCommand extends ListenerAdapter {
                             LocalDateTime newEventDateTime = LocalDateTime.parse(inputDatetime, FORMATTER);
                             eventEntity.setProcessedEventDateTime(newEventDateTime);
                         } catch (DateTimeParseException ex) {
-                            event.reply("Please follow this time format exactly \"yyyy-MM-dd HH:mm\"")
+                            event.reply("Please follow this time format exactly \"yyyy-MM-dd HH:mm\" (there is a space between dd HH)")
                                     .setEphemeral(true)
                                     .queue();
                             return;
@@ -124,7 +124,7 @@ public class EventManagementCommand extends ListenerAdapter {
             }
             
             // command - /resetevent
-            if("resetevent".equals(event.getName())){
+            if ("resetevent".equals(event.getName())) {
                 Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
                 if (optionalEventEntity.isEmpty()) {
                     log.error("Reset event not captured");
@@ -143,6 +143,25 @@ public class EventManagementCommand extends ListenerAdapter {
                 }
             }
             
+            // command - /pastevent
+            if ("pastevent".equals(event.getName())) {
+                Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
+                if (optionalEventEntity.isEmpty()) {
+                    log.error("Reset event not captured");
+                    event.reply("Event not captured. PM Rain to find out why ._.")
+                            .setEphemeral(true)
+                            .queue();
+                } else {
+                    EventEntity eventEntity = optionalEventEntity.get();
+                    eventEntity.setPostStatus("PAST");
+                    eventEntity.setUpdatedOn(LocalDateTime.now());
+                    eventRepository.save(eventEntity);
+                    
+                    event.reply("Event status set to PAST")
+                            .setEphemeral(true)
+                            .queue();
+                }
+            }
         }
     }
 }

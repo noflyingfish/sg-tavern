@@ -51,7 +51,6 @@ public class EventTitleChangeListener extends ListenerAdapter {
             
             EmbedBuilder eb = new EmbedBuilder();
             eb.setDescription("Post your event details after the title change for it to be captured by the bot :)");
-            eb.setFooter("Work-in-progress");
             MessageEmbed me = eb.build();
             Message m = event.getChannel().asThreadChannel().sendMessageEmbeds(me).complete();
             

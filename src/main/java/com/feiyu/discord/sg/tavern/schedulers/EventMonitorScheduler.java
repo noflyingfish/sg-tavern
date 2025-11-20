@@ -5,6 +5,7 @@ import com.feiyu.discord.sg.tavern.entities.EventEntity;
 import com.feiyu.discord.sg.tavern.entities.MessageEntity;
 import com.feiyu.discord.sg.tavern.repositories.EventRepository;
 import com.feiyu.discord.sg.tavern.repositories.MessageRepository;
+import com.feiyu.discord.sg.tavern.services.GptService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -37,6 +38,7 @@ public class EventMonitorScheduler {
     private final ValuesConfig valuesConfig;
     private final EventRepository eventRepository;
     private final MessageRepository messageRepository;
+    private final GptService gptService;
     
     // 11pm daily
     @Async
@@ -110,10 +112,19 @@ public class EventMonitorScheduler {
         int fieldCount = 0;
         
         for (EventEntity e : managedEventList) {
-            eb.addField(e.getProcessedEventName() + " @ " + e.getProcessedEventLocation(),
-                    e.getProcessedEventDateTime().format(df1) + " " + e.getProcessedEventDateTime().getDayOfWeek() + "\n"
-                            + e.getPostUrl(),
-                    false);
+            // "eventName @ eventLocation"
+            if(e.getProcessedEventName() != null && e.getProcessedEventLocation() != null) {
+                eb.addField(e.getProcessedEventName() + " @ " + e.getProcessedEventLocation(),
+                        e.getProcessedEventDateTime().format(df1) + " " + e.getProcessedEventDateTime().getDayOfWeek() + "\n"
+                                + e.getPostUrl(),
+                        false);
+            // only "eventName" XOR "eventLocation"
+            } else if(e.getProcessedEventName() == null ^ e.getProcessedEventLocation() == null){
+                eb.addField(e.getProcessedEventName() != null ? e.getProcessedEventName() : e.getProcessedEventLocation(),
+                        e.getProcessedEventDateTime().format(df1) + " " + e.getProcessedEventDateTime().getDayOfWeek() + "\n"
+                                + e.getPostUrl(),
+                        false);
+            }
             
             fieldCount++;
             if (fieldCount == 25) { // each embed msg only can have max 25 fields.
@@ -151,6 +162,31 @@ public class EventMonitorScheduler {
 //        pc.sendMessageEmbeds(me).queue();
         
         log.info("EventMonitorScheduler.sendEventScheduler End");
+    }
+    
+    // 10pm daily
+    @Async
+//    @Scheduled(cron = "0 0 22 * * ?", zone = "Asia/Singapore")
+    @Scheduled(fixedRate = 220000)
+    public void gptAnalysisEventScheduler() {
+        Guild guild = jda.getGuildById(valuesConfig.getGuildId());
+        
+        List<EventEntity> newPostWithDetailsList = eventRepository.findAllByPostStatusAndEventDetailMsgIdIsNotNull("NEW");
+        List<EventEntity> editedPostWithDetailsList = eventRepository.findAllByPostStatusAndEventDetailMsgIdIsNotNull("EDITED");
+        List<EventEntity> postWithDetailsList = new ArrayList<>();
+        postWithDetailsList.addAll(newPostWithDetailsList);
+        postWithDetailsList.addAll(editedPostWithDetailsList);
+        gptService.sendGpt(postWithDetailsList);
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("Event sent to GPT : ").append(postWithDetailsList.size()).append("\n");
+        postWithDetailsList.forEach(updatedEvent -> sb.append(updatedEvent.getPostUrl()).append("\n"));
+        String message = sb.toString();
+        
+        Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
+        log.info("Message sent to dev : {}", message);
+        PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();
+        pc.sendMessage(message).queue();
     }
     
 }
