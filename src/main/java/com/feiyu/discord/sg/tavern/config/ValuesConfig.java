@@ -44,4 +44,7 @@ public class ValuesConfig {
     
     @Value("${post.event-template}")
     private String eventTemplate;
+    
+    @Value("${gpt.apiKey}")
+    private String gptApiKey;
 }

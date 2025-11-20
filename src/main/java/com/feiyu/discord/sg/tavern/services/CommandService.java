@@ -59,6 +59,10 @@ public class CommandService {
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_SERVER))
                 .queue();
         
+        guild.upsertCommand("pastevent", "Mark event for this post as PAST")
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_SERVER))
+                .queue();
+        
         // general commands
         guild.upsertCommand("colour", "Change your name colour (CSS code eg. #FFFFFF) / \"random\"")
                 .addOption(OptionType.STRING, "colour", "CSS code or random", true)

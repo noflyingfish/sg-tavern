@@ -14,4 +14,6 @@ public interface EventRepository extends JpaRepository<EventEntity, String> {
     
     List<EventEntity> findAllByPostStatus(String postStatus);
     
+    List<EventEntity> findAllByPostStatusAndEventDetailMsgIdIsNotNull(String postStatus);
+    
 }
