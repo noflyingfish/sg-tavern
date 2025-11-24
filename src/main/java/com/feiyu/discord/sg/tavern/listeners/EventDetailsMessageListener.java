@@ -31,7 +31,8 @@ public class EventDetailsMessageListener extends ListenerAdapter {
                         event.getChannel().asThreadChannel().getParentChannel().getId())) {
             
             String message = event.getMessage().getContentDisplay();
-            if (RegexUtil.containTime(message) && RegexUtil.containDate(message)) {
+            
+            if (RegexUtil.containTime(message) && RegexUtil.containDate(message) && RegexUtil.containList(message)) {
                 log.info("Event post detected : name - {}, url - {}",
                         event.getChannel().getName(),
                         event.getMessage().getJumpUrl());

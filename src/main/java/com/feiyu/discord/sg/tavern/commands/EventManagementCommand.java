@@ -3,6 +3,7 @@ package com.feiyu.discord.sg.tavern.commands;
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
 import com.feiyu.discord.sg.tavern.entities.EventEntity;
 import com.feiyu.discord.sg.tavern.repositories.EventRepository;
+import com.feiyu.discord.sg.tavern.services.GptService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -28,6 +30,7 @@ public class EventManagementCommand extends ListenerAdapter {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(EXPECTED_FORMAT);
     private final EventRepository eventRepository;
     private final ValuesConfig valuesConfig;
+    private final GptService gptService;
     
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
@@ -158,6 +161,19 @@ public class EventManagementCommand extends ListenerAdapter {
                     eventRepository.save(eventEntity);
                     
                     event.reply("Event status set to PAST")
+                            .setEphemeral(true)
+                            .queue();
+                }
+            }
+            
+            // command - extractevent
+            if("extractevent".equals(event.getName())){
+                Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
+                if(optionalEventEntity.isEmpty()){
+                    log.error("Event not captured in database");
+                } else {
+                    gptService.sendGpt(List.of(optionalEventEntity.get()), event.getGuild());
+                    event.reply("Event sent to gpt")
                             .setEphemeral(true)
                             .queue();
                 }

@@ -166,8 +166,8 @@ public class EventMonitorScheduler {
     
     // 10pm daily
     @Async
-//    @Scheduled(cron = "0 0 22 * * ?", zone = "Asia/Singapore")
-    @Scheduled(fixedRate = 220000)
+    @Scheduled(cron = "0 0 22 * * ?", zone = "Asia/Singapore")
+    //@Scheduled(fixedRate = 220000)
     public void gptAnalysisEventScheduler() {
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
         
@@ -176,7 +176,7 @@ public class EventMonitorScheduler {
         List<EventEntity> postWithDetailsList = new ArrayList<>();
         postWithDetailsList.addAll(newPostWithDetailsList);
         postWithDetailsList.addAll(editedPostWithDetailsList);
-        gptService.sendGpt(postWithDetailsList);
+        gptService.sendGpt(postWithDetailsList, guild);
         
         StringBuilder sb = new StringBuilder();
         sb.append("Event sent to GPT : ").append(postWithDetailsList.size()).append("\n");
