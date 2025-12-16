@@ -28,12 +28,10 @@ import java.util.List;
 public class GptService {
     
     private final ValuesConfig valuesConfig;
-    private final JDA jda;
     private final EventRepository eventRepository;
     
-    public void sendGpt(List<EventEntity> eventEntityList) {
+    public void sendGpt(List<EventEntity> eventEntityList, Guild guild) {
         
-        Guild guild = jda.getGuildById(valuesConfig.getGuildId());
         StringBuilder userMessageBuilder = new StringBuilder();
         
         for (EventEntity event : eventEntityList) {
@@ -42,7 +40,7 @@ public class GptService {
                 Message eventDetailMessage = guild.getThreadChannelById(event.getPostId())
                         .retrieveMessageById(event.getEventDetailMsgId())
                         .complete();
-                String eventDetailMessageContent =  eventDetailMessage.getContentStripped()
+                String eventDetailMessageContent = eventDetailMessage.getContentStripped()
                         .replaceAll("\n", " ");
                 userMessageBuilder.append(RegexUtil.keepAscii(postTitle));
                 userMessageBuilder.append("\t");
@@ -76,7 +74,7 @@ public class GptService {
                         """)
                 .addUserMessage(userMessage)
                 .build();
-
+        
         StructuredChatCompletion<GptEventResponseList> result = client.chat().completions().create(params);
         log.info("GPT response full: {} ", result);
         List<GptEventResponse> gptEventList = result.choices().getFirst().message().content().stream().toList().getFirst().getGptEventList();

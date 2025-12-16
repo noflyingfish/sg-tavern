@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-11-22
+### Added
+- Check for regex check for `1.` for a namelist
+- `/extractevent` send EventDetailPost to gpt to extract and update event
+
 ## [2.0.0] - 2025-11-21
 ### Added
 - Attempt to use GPT to extract event info
