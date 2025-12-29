@@ -17,8 +17,8 @@ public class RegexUtil {
     private static final String DATE_REGEX = "(?i)\\b(?:" +
             // DD/MM/YYYY or DD-MM-YYYY: 1/1/1990, 25/12/2023, 15-01-2024
             "(?:0?[1-9]|[12]\\d|3[01])[/\\-](?:0?[1-9]|1[0-2])[/\\-]\\d{4}" + "|" +
-            // DD MMM format: 1 jan, 25 Dec, 05 Jan 2023, 5 March, 15 Mar 2025
-            "(?i)(?:0?[1-9]|[12]\\d|3[01])\\s?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]{0,6}(?:\\s?\\d{4})?" + ")\\b";
+            // DD MMM format: 1 jan, 1st jan, 25 Dec, 05 Jan 2023, 5 March, 15 Mar 2025
+            "(?i)(?:0?[1-9]|[12]\\d|3[01])(?:st|nd|rd|th)?\\s?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]{0,6}(?:\\s?\\d{4})?" + ")\\b";
     
     private static final String LIST_REGEX = "\\b\\d+\\s*\\.";
     

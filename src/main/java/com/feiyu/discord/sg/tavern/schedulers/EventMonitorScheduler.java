@@ -14,10 +14,8 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -27,7 +25,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -49,21 +46,55 @@ public class EventMonitorScheduler {
         
         List<EventEntity> newEventList = eventRepository.findAllByPostStatus("NEW");
         List<EventEntity> updateEventList = eventRepository.findAllByPostStatus("EDITED");
+        StringBuilder sb = new StringBuilder();
         
+        List<EventEntity> combinedEventList = new ArrayList<>();
+        combinedEventList.addAll(newEventList);
+        combinedEventList.addAll(updateEventList);
+        
+        // deleted event post
+        newEventList.removeIf(eventEntity ->
+                checkEventDeleted(guild, eventEntity)
+        );
+        updateEventList.removeIf(eventEntity ->
+                checkEventDeleted(guild, eventEntity)
+        );
+        
+        // message to track new/updated event
         if (!newEventList.isEmpty() || !updateEventList.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
             sb.append("New posts : ").append(newEventList.size()).append("\n");
             newEventList.forEach(newEvent -> sb.append(newEvent.getPostUrl()).append("\n"));
             sb.append("Updated posts : ").append(updateEventList.size()).append("\n");
             updateEventList.forEach(updatedEvent -> sb.append(updatedEvent.getPostUrl()).append("\n"));
-            String message = sb.toString();
-            
-            Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
-            log.info("Message sent to dev : {}", message);
-            PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();
-            pc.sendMessage(message).queue();
         }
+        
+        // sent event to gpt
+        List<EventEntity> postWithDetailsList = combinedEventList.stream()
+                .filter(eventEntity -> eventEntity.getEventDetailMsgId() != null)
+                .toList();
+        gptService.sendGpt(postWithDetailsList, guild);
+        
+        // message to track gpt evnt
+        sb.append("GPT posts : ").append(postWithDetailsList.size()).append("\n");
+        postWithDetailsList.forEach(updatedEvent -> sb.append(updatedEvent.getPostUrl()).append("\n"));
+        String message = sb.toString();
+        
+        Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
+        log.info("Message sent to dev : {}", message);
+        PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();
+        pc.sendMessage(message).queue();
+        
         log.info("EventMonitorScheduler.newEditedEventMonitorScheduler End");
+    }
+    
+    private boolean checkEventDeleted(Guild guild, EventEntity eventEntity) {
+        if (guild.getThreadChannelById(eventEntity.getPostId()) == null) {
+            eventEntity.setPostStatus("DELETED");
+            log.info("EventEntity DELETED : {} ", eventEntity);
+            eventRepository.save(eventEntity);
+            return true; // Remove this EventEntity
+        }
+        return false; // Keep this EventEntity
     }
     
     // 1am daily
@@ -77,7 +108,7 @@ public class EventMonitorScheduler {
         for (EventEntity eventEntity : managedEventList) {
             
             // deleted event post
-            if(guild.getThreadChannelById(eventEntity.getPostId()) == null){
+            if (guild.getThreadChannelById(eventEntity.getPostId()) == null) {
                 eventEntity.setPostStatus("DELETED");
                 log.info("EventEntity DELETED : {} ", eventEntity);
             }
@@ -107,19 +138,19 @@ public class EventMonitorScheduler {
         
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("Tavern Outing Notices for " + LocalDateTime.now().format(df2));
-        eb.setDescription("Please follow the template here for new posts : " + valuesConfig.getEventTemplate() +"\n");
+        eb.setDescription("Please follow the template here for new posts : " + valuesConfig.getEventTemplate() + "\n");
         
         int fieldCount = 0;
         
         for (EventEntity e : managedEventList) {
             // "eventName @ eventLocation"
-            if(e.getProcessedEventName() != null && e.getProcessedEventLocation() != null) {
+            if (e.getProcessedEventName() != null && e.getProcessedEventLocation() != null) {
                 eb.addField(e.getProcessedEventName() + " @ " + e.getProcessedEventLocation(),
                         e.getProcessedEventDateTime().format(df1) + " " + e.getProcessedEventDateTime().getDayOfWeek() + "\n"
                                 + e.getPostUrl(),
                         false);
-            // only "eventName" XOR "eventLocation"
-            } else if(e.getProcessedEventName() == null ^ e.getProcessedEventLocation() == null){
+                // only "eventName" XOR "eventLocation"
+            } else if (e.getProcessedEventName() == null ^ e.getProcessedEventLocation() == null) {
                 eb.addField(e.getProcessedEventName() != null ? e.getProcessedEventName() : e.getProcessedEventLocation(),
                         e.getProcessedEventDateTime().format(df1) + " " + e.getProcessedEventDateTime().getDayOfWeek() + "\n"
                                 + e.getPostUrl(),
@@ -162,31 +193,6 @@ public class EventMonitorScheduler {
 //        pc.sendMessageEmbeds(me).queue();
         
         log.info("EventMonitorScheduler.sendEventScheduler End");
-    }
-    
-    // 10pm daily
-    @Async
-    @Scheduled(cron = "0 0 22 * * ?", zone = "Asia/Singapore")
-    //@Scheduled(fixedRate = 220000)
-    public void gptAnalysisEventScheduler() {
-        Guild guild = jda.getGuildById(valuesConfig.getGuildId());
-        
-        List<EventEntity> newPostWithDetailsList = eventRepository.findAllByPostStatusAndEventDetailMsgIdIsNotNull("NEW");
-        List<EventEntity> editedPostWithDetailsList = eventRepository.findAllByPostStatusAndEventDetailMsgIdIsNotNull("EDITED");
-        List<EventEntity> postWithDetailsList = new ArrayList<>();
-        postWithDetailsList.addAll(newPostWithDetailsList);
-        postWithDetailsList.addAll(editedPostWithDetailsList);
-        gptService.sendGpt(postWithDetailsList, guild);
-        
-        StringBuilder sb = new StringBuilder();
-        sb.append("Event sent to GPT : ").append(postWithDetailsList.size()).append("\n");
-        postWithDetailsList.forEach(updatedEvent -> sb.append(updatedEvent.getPostUrl()).append("\n"));
-        String message = sb.toString();
-        
-        Member devMember = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete();
-        log.info("Message sent to dev : {}", message);
-        PrivateChannel pc = devMember.getUser().openPrivateChannel().complete();
-        pc.sendMessage(message).queue();
     }
     
 }
