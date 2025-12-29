@@ -53,12 +53,12 @@ public class EventMonitorScheduler {
         combinedEventList.addAll(updateEventList);
         
         // deleted event post
-        for (EventEntity eventEntity : combinedEventList) {
-            if (guild.getThreadChannelById(eventEntity.getPostId()) == null) {
-                eventEntity.setPostStatus("DELETED");
-                log.info("EventEntity DELETED : {} ", eventEntity);
-            }
-        }
+        newEventList.removeIf(eventEntity ->
+                checkEventDeleted(guild, eventEntity)
+        );
+        updateEventList.removeIf(eventEntity ->
+                checkEventDeleted(guild, eventEntity)
+        );
         
         // message to track new/updated event
         if (!newEventList.isEmpty() || !updateEventList.isEmpty()) {
@@ -85,6 +85,16 @@ public class EventMonitorScheduler {
         pc.sendMessage(message).queue();
         
         log.info("EventMonitorScheduler.newEditedEventMonitorScheduler End");
+    }
+    
+    private boolean checkEventDeleted(Guild guild, EventEntity eventEntity) {
+        if (guild.getThreadChannelById(eventEntity.getPostId()) == null) {
+            eventEntity.setPostStatus("DELETED");
+            log.info("EventEntity DELETED : {} ", eventEntity);
+            eventRepository.save(eventEntity);
+            return true; // Remove this EventEntity
+        }
+        return false; // Keep this EventEntity
     }
     
     // 1am daily
