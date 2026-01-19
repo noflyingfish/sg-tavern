@@ -70,7 +70,7 @@ public class GptService {
                             Rules:
                             - Do NOT guess or infer dates that are not explicitly stated.
                             - If the line does NOT contain a clear date/time expression, return event_datetime = null.
-                            - It is year 2025 now. The event date/time should be in the near future.
+                            - It is year 2026 now. The event date/time should be in the near future.
                         """)
                 .addUserMessage(userMessage)
                 .build();
