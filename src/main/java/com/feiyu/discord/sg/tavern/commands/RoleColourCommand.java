@@ -31,6 +31,7 @@ public class RoleColourCommand extends ListenerAdapter {
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         
         if ("colour".equals(event.getName())) {
+            log.info("Command - colour");
             String cssInput = event.getOption("colour").getAsString().toUpperCase();
             Color color;
             

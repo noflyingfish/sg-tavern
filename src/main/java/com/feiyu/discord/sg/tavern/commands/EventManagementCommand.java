@@ -49,6 +49,7 @@ public class EventManagementCommand extends ListenerAdapter {
                             .setEphemeral(true)
                             .queue();
                 } else {
+                    log.info("Command - eventstatus");
                     EventEntity eventEntity = optionalEventEntity.get();
                     EmbedBuilder eb = new EmbedBuilder();
                     eb.setTitle("Event Details");
@@ -89,6 +90,7 @@ public class EventManagementCommand extends ListenerAdapter {
                             .setEphemeral(true)
                             .queue();
                 } else {
+                    log.info("Command - manageevent");
                     EventEntity eventEntity = optionalEventEntity.get();
                     
                     OptionMapping processedEventName = event.getOption("eventname");
@@ -135,6 +137,7 @@ public class EventManagementCommand extends ListenerAdapter {
                             .setEphemeral(true)
                             .queue();
                 } else {
+                    log.info("Command - resetevent");
                     EventEntity eventEntity = optionalEventEntity.get();
                     eventEntity.setEventDetailMsgId(null);
                     eventEntity.setUpdatedOn(LocalDateTime.now());
@@ -155,6 +158,7 @@ public class EventManagementCommand extends ListenerAdapter {
                             .setEphemeral(true)
                             .queue();
                 } else {
+                    log.info("Command - pastevent");
                     EventEntity eventEntity = optionalEventEntity.get();
                     eventEntity.setPostStatus("PAST");
                     eventEntity.setUpdatedOn(LocalDateTime.now());
@@ -172,6 +176,7 @@ public class EventManagementCommand extends ListenerAdapter {
                 if(optionalEventEntity.isEmpty()){
                     log.error("Event not captured in database");
                 } else {
+                    log.info("Command - extractevent");
                     gptService.sendGpt(List.of(optionalEventEntity.get()), event.getGuild());
                     event.reply("Event sent to gpt")
                             .setEphemeral(true)

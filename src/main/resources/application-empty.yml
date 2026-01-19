@@ -14,7 +14,9 @@ spring:
       hibernate:
         dialect:
     open-in-view:
+
 discord.bot.token:
+gpt.apiKey:
 
 guildId:
 
@@ -27,15 +29,21 @@ channelId:
   intro:
   rules:
   admin-bot:
+  moderator-only:
+  admin-chat:
+  admin-it-chat:
   upcoming-event:
+  events-promo:
 
-private:
-  channels:
-    -
-  threads:
-    -
+private-channels:
+  -
+private-threads:
+  -
 
 roleId:
   event-organiser:
   new-joiner:
   name-colour-anchor:
+
+post:
+  event-template:
