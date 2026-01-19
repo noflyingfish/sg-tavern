@@ -46,11 +46,6 @@ public class EventMonitorScheduler {
         
         List<EventEntity> newEventList = eventRepository.findAllByPostStatus("NEW");
         List<EventEntity> updateEventList = eventRepository.findAllByPostStatus("EDITED");
-        StringBuilder sb = new StringBuilder();
-        
-        List<EventEntity> combinedEventList = new ArrayList<>();
-        combinedEventList.addAll(newEventList);
-        combinedEventList.addAll(updateEventList);
         
         // deleted event post
         newEventList.removeIf(eventEntity ->
@@ -61,6 +56,7 @@ public class EventMonitorScheduler {
         );
         
         // message to track new/updated event
+        StringBuilder sb = new StringBuilder();
         if (!newEventList.isEmpty() || !updateEventList.isEmpty()) {
             sb.append("New posts : ").append(newEventList.size()).append("\n");
             newEventList.forEach(newEvent -> sb.append(newEvent.getPostUrl()).append("\n"));
@@ -68,13 +64,17 @@ public class EventMonitorScheduler {
             updateEventList.forEach(updatedEvent -> sb.append(updatedEvent.getPostUrl()).append("\n"));
         }
         
+        List<EventEntity> combinedEventList = new ArrayList<>();
+        combinedEventList.addAll(newEventList);
+        combinedEventList.addAll(updateEventList);
+        
         // sent event to gpt
         List<EventEntity> postWithDetailsList = combinedEventList.stream()
                 .filter(eventEntity -> eventEntity.getEventDetailMsgId() != null)
                 .toList();
         gptService.sendGpt(postWithDetailsList, guild);
         
-        // message to track gpt evnt
+        // message to track gpt event
         sb.append("GPT posts : ").append(postWithDetailsList.size()).append("\n");
         postWithDetailsList.forEach(updatedEvent -> sb.append(updatedEvent.getPostUrl()).append("\n"));
         String message = sb.toString();

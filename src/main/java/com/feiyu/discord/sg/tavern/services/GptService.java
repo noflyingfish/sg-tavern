@@ -76,9 +76,9 @@ public class GptService {
                 .build();
         
         StructuredChatCompletion<GptEventResponseList> result = client.chat().completions().create(params);
-        log.info("GPT response full: {} ", result);
         List<GptEventResponse> gptEventList = result.choices().getFirst().message().content().stream().toList().getFirst().getGptEventList();
-        log.info("GPT response size: {} ", result);
+        log.info("GPT response full: {} ", result);
+        log.info("GPT response size: {} ", gptEventList.size());
         
         for (int i = 0; i < gptEventList.size(); i++) {
             GptEventResponse gptEventResponse = gptEventList.get(i);
