@@ -7,6 +7,7 @@ import com.feiyu.discord.sg.tavern.services.GptService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -66,11 +67,11 @@ public class EventManagementCommand extends ListenerAdapter {
                             eventEntity.getProcessedEventDateTime() != null
                                     ? eventEntity.getProcessedEventDateTime().toString() : "",
                             false);
+                    Message eventDetailMessage = event.getChannel().asThreadChannel()
+                            .retrieveMessageById(eventEntity.getEventDetailMsgId())
+                            .complete();
                     eb.addField("Event Detail Post",
-                            eventEntity.getEventDetailMsgId() != null ? event.getChannel().asThreadChannel()
-                                    .retrieveMessageById(eventEntity.getEventDetailMsgId())
-                                    .complete()
-                                    .getJumpUrl() : "",
+                            eventDetailMessage != null ? eventDetailMessage.getJumpUrl() : "" ,
                             false);
                     MessageEmbed me = eb.build();
                     
@@ -185,4 +186,5 @@ public class EventManagementCommand extends ListenerAdapter {
             }
         }
     }
+
 }

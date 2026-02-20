@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-02-01
+- Major version change for JDA to 6.3.0 from 5.6.1
+- Bug fix on `/eventstatus` and sendGpt component
+- Clean up logging for newbie scheduler
+
 ## [2.1.4] - 2026-01-20
 ### Added
 - Bug fix on deleted post in event scheduler

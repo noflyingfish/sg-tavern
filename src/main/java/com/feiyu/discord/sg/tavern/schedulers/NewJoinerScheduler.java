@@ -14,6 +14,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -29,9 +31,15 @@ public class NewJoinerScheduler {
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Singapore")
     public void updateNewbieScheduler() {
         log.info("NewJoinerScheduler.updateNewbieScheduler Start");
-        
+
         List<NewJoinerEntity> newJoinerEntityList = newJoinerRepository.findAll();
+        newJoinerEntityList.sort(Comparator.comparing(NewJoinerEntity::getJoinDateTime));
         log.info("Newbie count : {}", newJoinerEntityList.size());
+        List<String> newbieNames = new ArrayList<>(newJoinerEntityList.size());
+        for (NewJoinerEntity newbie : newJoinerEntityList) {
+            newbieNames.add(newbie.getUsername());
+        }
+        log.info("Newbies: {}", newbieNames);
         
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
         for (NewJoinerEntity newbie : newJoinerEntityList) {
@@ -39,19 +47,17 @@ public class NewJoinerScheduler {
                 Member member = guild.retrieveMemberById(newbie.getUserId()).complete();
                 if (newbie.getJoinDateTime().isBefore(LocalDateTime.now().minusMonths(3L))) {
                     guild.removeRoleFromMember(member.getUser(), guild.getRoleById(valuesConfig.getNewJoinerRoleId())).queue();
-                    log.info("Member not longer a newbie : {}", newbie);
+                    log.info("Member not longer a newbie : {}", newbie.getUsername());
                     newJoinerRepository.delete(newbie);
-                } else {
-                    log.info("Member still newbie : {}", newbie);
                 }
             } catch (ErrorResponseException ex) {
                 System.out.println(ex.getErrorCode());;
                 if (10007 == ex.getErrorCode()) { // 10007 : Unknown Member
-                    log.info("Member already left server: {}", newbie);
+                    log.info("Member already left server: {}", newbie.getUsername());
                     newJoinerRepository.delete(newbie);
                 }
             } catch (Exception e){
-                log.error("Error at retrieving member with {}", newbie);
+                log.error("Error at retrieving member with {}", newbie.getUsername(), e);
             }
         }
         log.info("NewJoinerScheduler.updateNewbieScheduler End");
