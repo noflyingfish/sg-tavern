@@ -72,7 +72,7 @@ public class EventMonitorScheduler {
         List<EventEntity> postWithDetailsList = combinedEventList.stream()
                 .filter(eventEntity -> eventEntity.getEventDetailMsgId() != null)
                 .toList();
-        //gptService.sendGpt(postWithDetailsList, guild);
+        gptService.sendGpt(postWithDetailsList, guild);
         
         // message to track gpt event
         sb.append("GPT posts : ").append(postWithDetailsList.size()).append("\n");

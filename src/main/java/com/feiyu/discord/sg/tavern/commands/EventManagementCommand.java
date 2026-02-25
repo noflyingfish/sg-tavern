@@ -178,6 +178,7 @@ public class EventManagementCommand extends ListenerAdapter {
             // command - extractevent
             if("extractevent".equals(event.getName())){
                 log.info("Command - extractevent - {}", event.getChannel().asThreadChannel().getId());
+                event.deferReply(true).queue();
                 
                 Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
                 
