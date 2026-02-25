@@ -42,15 +42,15 @@ public class EventManagementCommand extends ListenerAdapter {
                         event.getChannel().asThreadChannel().getParentChannel().getId())) {
             // command - /eventstatus
             if ("eventstatus".equals(event.getName())) {
+                log.info("Command - eventstatus - {}", event.getChannel().asThreadChannel().getId());
                 
                 Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
                 
                 if (optionalEventEntity.isEmpty()) {
-                    event.reply("Event waiting to be captured. Please try again next day")
+                    event.reply("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
                             .queue();
                 } else {
-                    log.info("Command - eventstatus");
                     EventEntity eventEntity = optionalEventEntity.get();
                     EmbedBuilder eb = new EmbedBuilder();
                     eb.setTitle("Event Details");
@@ -67,12 +67,14 @@ public class EventManagementCommand extends ListenerAdapter {
                             eventEntity.getProcessedEventDateTime() != null
                                     ? eventEntity.getProcessedEventDateTime().toString() : "",
                             false);
-                    Message eventDetailMessage = event.getChannel().asThreadChannel()
-                            .retrieveMessageById(eventEntity.getEventDetailMsgId())
-                            .complete();
-                    eb.addField("Event Detail Post",
-                            eventDetailMessage != null ? eventDetailMessage.getJumpUrl() : "" ,
-                            false);
+                    if(eventEntity.getEventDetailMsgId() != null) {
+                        Message eventDetailMessage = event.getChannel().asThreadChannel()
+                                .retrieveMessageById(eventEntity.getEventDetailMsgId())
+                                .complete();
+                        eb.addField("Event Detail Post",
+                                eventDetailMessage != null ? eventDetailMessage.getJumpUrl() : "",
+                                false);
+                    }
                     MessageEmbed me = eb.build();
                     
                     event.replyEmbeds(me)
@@ -83,15 +85,15 @@ public class EventManagementCommand extends ListenerAdapter {
             
             // command - /manageevent
             if ("manageevent".equals(event.getName())) {
+                log.info("Command - manageevent - {}", event.getChannel().asThreadChannel().getId());
                 
                 Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
                 
                 if (optionalEventEntity.isEmpty()) {
-                    event.reply("Event waiting to be captured. Please try again next day")
+                    event.reply("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
                             .queue();
                 } else {
-                    log.info("Command - manageevent");
                     EventEntity eventEntity = optionalEventEntity.get();
                     
                     OptionMapping processedEventName = event.getOption("eventname");
@@ -131,14 +133,15 @@ public class EventManagementCommand extends ListenerAdapter {
             
             // command - /resetevent
             if ("resetevent".equals(event.getName())) {
+                log.info("Command - resetevent - {}", event.getChannel().asThreadChannel().getId());
+                
                 Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
+                
                 if (optionalEventEntity.isEmpty()) {
-                    log.error("Reset event not captured");
-                    event.reply("Event not captured. PM Rain to find out why ._.")
+                    event.reply("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
                             .queue();
                 } else {
-                    log.info("Command - resetevent");
                     EventEntity eventEntity = optionalEventEntity.get();
                     eventEntity.setEventDetailMsgId(null);
                     eventEntity.setUpdatedOn(LocalDateTime.now());
@@ -152,14 +155,15 @@ public class EventManagementCommand extends ListenerAdapter {
             
             // command - /pastevent
             if ("pastevent".equals(event.getName())) {
+                log.info("Command - pastevent - {}", event.getChannel().asThreadChannel().getId());
+                
                 Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
+                
                 if (optionalEventEntity.isEmpty()) {
-                    log.error("Reset event not captured");
-                    event.reply("Event not captured. PM Rain to find out why ._.")
+                    event.reply("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
                             .queue();
                 } else {
-                    log.info("Command - pastevent");
                     EventEntity eventEntity = optionalEventEntity.get();
                     eventEntity.setPostStatus("PAST");
                     eventEntity.setUpdatedOn(LocalDateTime.now());
@@ -173,11 +177,16 @@ public class EventManagementCommand extends ListenerAdapter {
             
             // command - extractevent
             if("extractevent".equals(event.getName())){
+                log.info("Command - extractevent - {}", event.getChannel().asThreadChannel().getId());
+                event.deferReply(true).queue();
+                
                 Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
+                
                 if(optionalEventEntity.isEmpty()){
-                    log.error("Event not captured in database");
+                    event.reply("Not captured. Ping Rain to troubleshoot!")
+                            .setEphemeral(true)
+                            .queue();
                 } else {
-                    log.info("Command - extractevent");
                     gptService.sendGpt(List.of(optionalEventEntity.get()), event.getGuild());
                     event.reply("Event sent to gpt")
                             .setEphemeral(true)

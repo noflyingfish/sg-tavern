@@ -70,9 +70,7 @@ public class EventMonitorScheduler {
         
         // sent event to gpt
         List<EventEntity> postWithDetailsList = combinedEventList.stream()
-                .filter(eventEntity -> guild.getThreadChannelById(valuesConfig.getUpcomingEventChannelId())
-                        .retrieveMessageById(eventEntity.getEventDetailMsgId())
-                        .complete() != null)
+                .filter(eventEntity -> eventEntity.getEventDetailMsgId() != null)
                 .toList();
         gptService.sendGpt(postWithDetailsList, guild);
         

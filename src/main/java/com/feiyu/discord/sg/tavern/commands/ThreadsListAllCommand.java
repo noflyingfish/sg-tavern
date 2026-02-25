@@ -26,6 +26,7 @@ public class ThreadsListAllCommand extends ListenerAdapter {
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         
         if ("allthreads".equals(event.getName())) {
+            log.info("Command - allthreads - {}", event.getUser().getId());
             
             Guild guild = event.getGuild();
             List<TextChannel> channelList = guild.getTextChannels();
