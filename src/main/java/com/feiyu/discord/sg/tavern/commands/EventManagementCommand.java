@@ -188,7 +188,7 @@ public class EventManagementCommand extends ListenerAdapter {
                             .queue();
                 } else {
                     gptService.sendGpt(List.of(optionalEventEntity.get()), event.getGuild());
-                    event.reply("Event sent to gpt")
+                    event.getHook().sendMessage("Event sent to gpt")
                             .setEphemeral(true)
                             .queue();
                 }
