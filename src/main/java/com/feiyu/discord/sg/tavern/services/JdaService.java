@@ -18,6 +18,7 @@ public class JdaService {
     
     private final IntroCheckCommand introCheckCommand;
     private final InviteLinkCommand inviteLinkCommand;
+    private final EventPingCommand eventPingCommand;
     private final RoleColourCommand roleColourCommand;
     private final EventManagementCommand eventManagementCommand;
     private final ThreadsListAllCommand threadsListAllCommand;
@@ -40,6 +41,7 @@ public class JdaService {
                 .addEventListeners(inviteLinkCommand)
                 .addEventListeners(roleColourCommand)
                 .addEventListeners(eventManagementCommand)
+                .addEventListeners(eventPingCommand)
                 .addEventListeners(threadsListAllCommand)
                 // listeners
                 .addEventListeners(newJoinerListener)
