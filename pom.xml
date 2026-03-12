@@ -10,7 +10,6 @@
 	</parent>
 	<groupId>com.feiyu.discord</groupId>
 	<artifactId>sg-tavern</artifactId>
-	<version>2.3.0</version>
 	<name>sg-tavern</name>
 
 	<properties>
