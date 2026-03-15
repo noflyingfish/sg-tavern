@@ -59,18 +59,19 @@ public class GptService {
                 .build();
         
         StructuredChatCompletionCreateParams<GptEventResponseList> params = ChatCompletionCreateParams.builder()
-                .model(ChatModel.GPT_4O_MINI)
+                .model(ChatModel.GPT_4_1_MINI)
                 .responseFormat(GptEventResponseList.class)
                 .addSystemMessage("""
                             Extract event data from each line. Multiple lines in one message.
                             For each line, return:
-                            - Event Name (Don't repeat location)
-                            - Event Location
-                            - Event Datetime (Info with event created date)
+                            - Event Name (Don't repeat mentioning location)
+                            - Event Location (Remove excessive address)
+                            - Event Datetime (Give me the starting timestamp ONLY, must not a range)
                             Rules:
+                            - If you extracted more than 1 event, must only return the early event
                             - Do NOT guess or infer dates that are not explicitly stated.
                             - If the line does NOT contain a clear date/time expression, return event_datetime = null.
-                            - It is year 2026 now. The event date/time should be in the near future.
+                            - Reference Year 2026. infer using this reference if message doesn't contain year.
                         """)
                 .addUserMessage(userMessage)
                 .build();
