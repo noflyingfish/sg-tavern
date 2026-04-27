@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-04-27
+- new `/invite` command for members. Limit to 3 creation monthly.
+- new `/invitemany` command for mods
+- log4j2 history from daily to monthly
+
+## [2.3.2] - 2026-03-15
+- Message to mod channel on User's Role (event organiser/ newcomer) change
+
 ## [2.3.1] - 2026-03-10
 - Improved GPT model and debug
 

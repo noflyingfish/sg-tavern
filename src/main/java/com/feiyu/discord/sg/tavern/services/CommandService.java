@@ -36,8 +36,9 @@ public class CommandService {
                 .queue();
         
         // mod commands
-        guild.upsertCommand("invite", "Get an invite link to this server (valid 48hrs)")
-                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.CREATE_INSTANT_INVITE))
+        guild.upsertCommand("invitemany", "Get a reusable invite link")
+                .addOption(OptionType.INTEGER, "count", "Invite many many (default 1)", false)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
                 .queue();
         
         // event command
@@ -76,6 +77,9 @@ public class CommandService {
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
                 .queue();
         guild.upsertCommand("allthreads", "List out all the existing channels. and threads")
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
+                .queue();
+        guild.upsertCommand("invite", "Get an invite link to this server (valid 48hrs)")
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
                 .queue();
         

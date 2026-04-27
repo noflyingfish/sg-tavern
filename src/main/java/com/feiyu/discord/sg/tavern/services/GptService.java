@@ -14,9 +14,9 @@ import com.openai.models.chat.completions.StructuredChatCompletion;
 import com.openai.models.chat.completions.StructuredChatCompletionCreateParams;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,6 +29,7 @@ public class GptService {
     
     private final ValuesConfig valuesConfig;
     private final EventRepository eventRepository;
+    private final MessageService messageService;
     
     public void sendGpt(List<EventEntity> eventEntityList, Guild guild) {
         
@@ -59,18 +60,18 @@ public class GptService {
                 .build();
         
         StructuredChatCompletionCreateParams<GptEventResponseList> params = ChatCompletionCreateParams.builder()
-                .model(ChatModel.GPT_4_1_MINI)
+                .model(ChatModel.GPT_4_1)
                 .responseFormat(GptEventResponseList.class)
                 .addSystemMessage("""
                             Extract event data from each line. Multiple lines in one message.
                             For each line, return:
-                            - Event Name (Don't repeat mentioning location)
-                            - Event Location (Remove excessive address)
-                            - Event Datetime (Give me the starting timestamp ONLY, must not a range)
-                            Rules:
-                            - If you extracted more than 1 event, must only return the early event
-                            - Do NOT guess or infer dates that are not explicitly stated.
-                            - If the line does NOT contain a clear date/time expression, return event_datetime = null.
+                            - Event Name
+                            - Event Location
+                            - Event Datetime
+                            Rules when parsing:
+                            - Do not repeat Event Name in Event Location
+                            - Each line only refers to ONE event, if multiple events detected return the earlier one
+                            - Event Datetime MUST be formated to "yyyy-MM-ddTHH:mm:ss" ISO-8601 format for parsing
                             - Reference Year 2026. infer using this reference if message doesn't contain year.
                         """)
                 .addUserMessage(userMessage)
@@ -82,17 +83,23 @@ public class GptService {
         log.info("GPT response size: {} ", gptEventList.size());
         
         for (int i = 0; i < gptEventList.size(); i++) {
-            GptEventResponse gptEventResponse = gptEventList.get(i);
             EventEntity e = eventEntityList.get(i);
-            log.info("GPT response event : {}", gptEventResponse);
-            log.info("Database event pre update: {}", e);
-            e.setProcessedEventName(gptEventResponse.getEventName());
-            e.setProcessedEventLocation(gptEventResponse.getEventLocation());
-            e.setProcessedEventDateTime(gptEventResponse.getEventDatetime());
-            e.setUpdatedOn(LocalDateTime.now());
-            e.setPostStatus("MANAGED");
-            eventRepository.save(e);
-            log.info("Database event post update: {}", e);
+            try {
+                GptEventResponse gptEventResponse = gptEventList.get(i);
+                log.info("GPT response event : {}", gptEventResponse);
+                log.info("Database event pre update: {}", e);
+                e.setProcessedEventName(gptEventResponse.getEventName());
+                e.setProcessedEventLocation(gptEventResponse.getEventLocation());
+                e.setProcessedEventDateTime(LocalDateTime.parse(gptEventResponse.getEventDatetime()));
+                e.setUpdatedOn(LocalDateTime.now());
+                e.setPostStatus("MANAGED");
+                eventRepository.save(e);
+                log.info("Database event post update: {}", e);
+            } catch (Exception ex){
+                User dev = guild.retrieveMemberById(valuesConfig.getDevUserId()).complete().getUser();
+                String errorMessage = "Error parsing : " + e.getPostUrl();
+                messageService.sendMemberMessage(dev, errorMessage);
+            }
         }
     }
     

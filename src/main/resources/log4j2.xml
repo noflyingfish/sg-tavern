@@ -7,7 +7,7 @@
     <Appenders>
         <!-- File Appender -->
         <RollingFile name="File" fileName="${PATH}/${APP_NAME}.log"
-                     filePattern="${PATH}/${APP_NAME}-%d{yyyy-MM-dd}.log">
+                     filePattern="${PATH}/${APP_NAME}-%d{yyyy-MM}.log">
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n</Pattern>
             </PatternLayout>
