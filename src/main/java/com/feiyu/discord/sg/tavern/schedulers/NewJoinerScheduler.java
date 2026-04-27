@@ -3,11 +3,13 @@ package com.feiyu.discord.sg.tavern.schedulers;
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
 import com.feiyu.discord.sg.tavern.entities.NewJoinerEntity;
 import com.feiyu.discord.sg.tavern.repositories.NewJoinerRepository;
+import com.feiyu.discord.sg.tavern.services.MessageService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,6 +28,7 @@ public class NewJoinerScheduler {
     private final JDA jda;
     private final ValuesConfig valuesConfig;
     private final NewJoinerRepository newJoinerRepository;
+    private final MessageService messageService;
     
     @Async
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Singapore")
@@ -44,11 +47,16 @@ public class NewJoinerScheduler {
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());
         for (NewJoinerEntity newbie : newJoinerEntityList) {
             try {
-                Member member = guild.retrieveMemberById(newbie.getUserId()).complete();
+                User user = guild.retrieveMemberById(newbie.getUserId()).complete().getUser();
                 if (newbie.getJoinDateTime().isBefore(LocalDateTime.now().minusMonths(3L))) {
-                    guild.removeRoleFromMember(member.getUser(), guild.getRoleById(valuesConfig.getNewJoinerRoleId())).queue();
-                    log.info("Member not longer a newbie : {}", newbie.getUsername());
+                    Role newJoinerRole = guild.getRoleById(valuesConfig.getNewJoinerRoleId());
+                    
                     newJoinerRepository.delete(newbie);
+                    log.info("Member not longer a newbie : {}", newbie.getUsername());
+                    
+                    guild.removeRoleFromMember(user, newJoinerRole).queue();
+                    String adminRoleMessage = user.getEffectiveName() + " - " +  user.getName() + " removed role : " + newJoinerRole.getName();
+                    messageService.sendAdminChannelMessage(guild, adminRoleMessage);
                 }
             } catch (ErrorResponseException ex) {
                 System.out.println(ex.getErrorCode());;

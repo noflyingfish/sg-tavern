@@ -35,3 +35,11 @@ CREATE TABLE IF NOT EXISTS role_colour(
     randomFlag VARCHAR(1),
     updatedOn TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS members(
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    memberId VARCHAR(255),
+    inviteLinkCounter INTEGER,
+    totalMembersInvited INTEGER,
+    updatedOn TIMESTAMP
+);

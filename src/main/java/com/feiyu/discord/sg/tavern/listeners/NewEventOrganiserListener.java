@@ -1,13 +1,14 @@
 package com.feiyu.discord.sg.tavern.listeners;
 
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
+import com.feiyu.discord.sg.tavern.services.MessageService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class NewEventOrganiserListener extends ListenerAdapter {
     
     private final ValuesConfig valuesConfig;
+    private final MessageService messageService;
     
     @Override
     public void onChannelCreate(ChannelCreateEvent event) {
@@ -28,17 +30,24 @@ public class NewEventOrganiserListener extends ListenerAdapter {
                         event.getChannel().asThreadChannel().getParentChannel().getId())) {
             
             Guild guild = event.getGuild();
-            User user = guild.retrieveMemberById(event.getChannel().asThreadChannel().getOwnerId())
-                    .complete()
-                    .getUser();
+            Member member = guild.retrieveMemberById(event.getChannel().asThreadChannel().getOwnerId())
+                    .complete();
+            User user = member.getUser();
+            
             Role eventOrganiserRole = guild.getRoleById(valuesConfig.getEventOrganiserRoleId());
             
-            guild.addRoleToMember(user, eventOrganiserRole).queue();
+            if (member.getRoles().stream()
+                    .noneMatch(role -> role.getId().equals(valuesConfig.getEventOrganiserRoleId()))) {
+                guild.addRoleToMember(user, eventOrganiserRole).queue();
+                String adminRoleMessage = user.getEffectiveName() + " - " + user.getName() + " assigned role : " + eventOrganiserRole.getName();
+                messageService.sendAdminChannelMessage(guild, adminRoleMessage);
+            }
             
-            String adminMessage =  user.getEffectiveName() + " - " + user.getName() + " has posted an event : \n"
+            String adminMessage = user.getEffectiveName() + " - " + user.getName() + " has posted an event : \n"
                     + event.getChannel().asThreadChannel().getName();
-            TextChannel adminChannel = guild.getTextChannelById(valuesConfig.getAdminBotChannelId());
-            adminChannel.sendMessage(adminMessage).queue();
+            messageService.sendAdminChannelMessage(guild, adminMessage);
+            
+
             
             log.info("NewEventOrganiserListener : " + event.getRawData().toString());
         }

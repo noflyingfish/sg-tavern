@@ -15,6 +15,6 @@ public class GptEventResponse {
     
     String eventName;
     String eventLocation;
-    LocalDateTime eventDatetime;
+    String eventDatetime;
     
 }
