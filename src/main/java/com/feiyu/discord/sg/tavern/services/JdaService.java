@@ -24,6 +24,7 @@ public class JdaService {
     private final ThreadsListAllCommand threadsListAllCommand;
     
     private final MemberJoinListener newJoinerListener;
+    private final GuildInviteListener guildInviteListener;
     private final MemberExitListener memberExitListener;
     private final NewEventOrganiserListener newEventOrganiserListener;
     private final EventTitleChangeListener eventTitleChangeListener;
@@ -45,6 +46,7 @@ public class JdaService {
                 .addEventListeners(threadsListAllCommand)
                 // listeners
                 .addEventListeners(newJoinerListener)
+                .addEventListeners(guildInviteListener)
                 .addEventListeners(memberExitListener)
                 .addEventListeners(newEventOrganiserListener)
                 .addEventListeners(eventTitleChangeListener)
