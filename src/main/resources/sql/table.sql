@@ -37,9 +37,18 @@ CREATE TABLE IF NOT EXISTS role_colour(
 );
 
 CREATE TABLE IF NOT EXISTS members(
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    memberId VARCHAR(255),
-    inviteLinkCounter INTEGER,
-    totalMembersInvited INTEGER,
-    updatedOn TIMESTAMP
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    userId VARCHAR(255),
+    inviterId VARCHAR(255),
+    inviteLinkCounter INTEGER DEFAULT 0,
+    totalMembersInvited INTEGER DEFAULT 0,
+    updatedOn TIMESTAMP,
+    joinDatetime TIMESTAMP,
+    leaveDatetime TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS invite_link(
+    inviteCode VARCHAR(255) PRIMARY KEY,
+    creatorMemberId VARCHAR(255),
+    createdOn TIMESTAMP
 );

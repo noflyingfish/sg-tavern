@@ -1,8 +1,7 @@
 package com.feiyu.discord.sg.tavern.commands;
 
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
-import com.feiyu.discord.sg.tavern.entities.MemberEntity;
-import com.feiyu.discord.sg.tavern.repositories.MemberRepository;
+import com.feiyu.discord.sg.tavern.services.InviteLinkService;
 import com.feiyu.discord.sg.tavern.services.MemberService;
 import com.feiyu.discord.sg.tavern.services.MessageService;
 import lombok.AllArgsConstructor;
@@ -17,7 +16,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -28,6 +26,7 @@ public class InviteLinkCommand extends ListenerAdapter {
     private final ValuesConfig valuesConfig;
     private final MessageService messageService;
     private final MemberService memberService;
+    private final InviteLinkService inviteLinkService;
     
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
@@ -38,12 +37,16 @@ public class InviteLinkCommand extends ListenerAdapter {
             Guild guild = event.getGuild();
             TextChannel landingChannel = guild.getTextChannelById(valuesConfig.getRulesChannelId());
             
+            // save member to database
             if(memberService.allowedToCreateInvite(user)){
                 Invite invite = landingChannel.createInvite()
                         .setMaxAge(2L, TimeUnit.DAYS)
                         .setMaxUses(1)
                         .setUnique(true)
                         .complete();
+                
+                // save creator of the link
+                inviteLinkService.saveInviteLink(invite.getCode(), user.getId());
                 
                 // send member the server invite link
                 String inviteMessage = "Share this invite link with your friend. It is valid for 48hrs from now.\n"
@@ -80,6 +83,12 @@ public class InviteLinkCommand extends ListenerAdapter {
                     .setMaxUses(count)
                     .setUnique(true)
                     .complete();
+            
+            // save member to database
+            memberService.getOrCreateMember(user);
+            
+            // save creator of the link
+            inviteLinkService.saveInviteLink(invite.getCode(), user.getId());
             
             // send member the server invite link
             String inviteMessage = "This is a reusable invite link. Valid for " + count + " uses.\n "+
