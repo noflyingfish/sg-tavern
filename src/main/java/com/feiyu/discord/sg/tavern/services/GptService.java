@@ -2,8 +2,8 @@ package com.feiyu.discord.sg.tavern.services;
 
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
 import com.feiyu.discord.sg.tavern.entities.EventEntity;
-import com.feiyu.discord.sg.tavern.models.GptEventResponse;
-import com.feiyu.discord.sg.tavern.models.GptEventResponseList;
+import com.feiyu.discord.sg.tavern.models.gpt.GptEventResponse;
+import com.feiyu.discord.sg.tavern.models.gpt.GptEventResponseList;
 import com.feiyu.discord.sg.tavern.repositories.EventRepository;
 import com.feiyu.discord.sg.tavern.utils.RegexUtil;
 import com.openai.client.OpenAIClient;
