@@ -82,6 +82,9 @@ public class CommandService {
         guild.upsertCommand("invite", "Get an invite link to this server (valid 48hrs)")
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
                 .queue();
+        guild.upsertCommand("pollanonymous", "Create an anonymous poll")
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
+                .queue();
         
         log.info("Finish insert commands");
     }

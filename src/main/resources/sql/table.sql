@@ -52,3 +52,32 @@ CREATE TABLE IF NOT EXISTS invite_link(
     creatorMemberId VARCHAR(255),
     createdOn TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS poll(
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    channelId VARCHAR(255),
+    messageId VARCHAR(255),
+    creatorUserId VARCHAR(255),
+    question LONGTEXT,
+    maxSelection INTEGER,
+    durationOption VARCHAR(32),
+    option1 LONGTEXT,
+    option2 LONGTEXT,
+    option3 LONGTEXT,
+    option4 LONGTEXT,
+    option5 LONGTEXT,
+    status VARCHAR(32),
+    createdOn TIMESTAMP,
+    publishedOn TIMESTAMP,
+    closesOn TIMESTAMP,
+    closedOn TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS poll_vote(
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    pollId BIGINT,
+    voterUserId VARCHAR(255),
+    optionNumber INTEGER,
+    createdOn TIMESTAMP,
+    CONSTRAINT uk_poll_vote_selection UNIQUE (pollId, voterUserId, optionNumber)
+);

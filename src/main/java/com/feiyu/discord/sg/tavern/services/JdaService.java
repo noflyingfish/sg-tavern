@@ -22,6 +22,7 @@ public class JdaService {
     private final RoleColourCommand roleColourCommand;
     private final EventManagementCommand eventManagementCommand;
     private final ThreadsListAllCommand threadsListAllCommand;
+    private final AnonymousPollCommand anonymousPollCommand;
     
     private final MemberJoinListener newJoinerListener;
     private final GuildInviteListener guildInviteListener;
@@ -44,6 +45,7 @@ public class JdaService {
                 .addEventListeners(eventManagementCommand)
                 .addEventListeners(eventPingCommand)
                 .addEventListeners(threadsListAllCommand)
+                .addEventListeners(anonymousPollCommand)
                 // listeners
                 .addEventListeners(newJoinerListener)
                 .addEventListeners(guildInviteListener)
