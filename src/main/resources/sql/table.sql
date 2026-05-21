@@ -82,3 +82,15 @@ CREATE TABLE IF NOT EXISTS poll_vote(
     createdOn TIMESTAMP,
     CONSTRAINT uk_poll_vote_selection UNIQUE (pollId, voterUserId, optionNumber)
 );
+
+ALTER TABLE upcoming_event ADD COLUMN signUpMsgId VARCHAR(255) NULL;
+
+CREATE TABLE IF NOT EXISTS event_attendance(
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    postId VARCHAR(255) NOT NULL,
+    userId VARCHAR(255) NOT NULL,
+    displayName VARCHAR(255),
+    status VARCHAR(32) NOT NULL,
+    createdOn DATETIME,
+    CONSTRAINT uk_attendance_user UNIQUE (postId, userId)
+);

@@ -43,7 +43,7 @@ public class EventConfirmationListener extends ListenerAdapter {
                     .setEphemeral(true).queue();
 
             if (listConfig.getEventPilotPostIds().contains(postId)) {
-                eventService.onboardEventToPhase2(postId, event.getGuild());
+                eventService.triggerSignUp(postId, event.getGuild());
             }
         } else {
             event.getHook().sendMessage("Extraction failed. The event will be retried in the nightly batch.")

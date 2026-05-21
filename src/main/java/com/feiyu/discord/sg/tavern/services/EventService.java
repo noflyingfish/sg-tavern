@@ -17,6 +17,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final GptService gptService;
+    private final EventSignUpService eventSignUpService;
 
     public boolean confirmEvent(String postId, Guild guild) {
         EventEntity entity = eventRepository.findTopByPostId(postId).orElse(null);
@@ -39,9 +40,8 @@ public class EventService {
         return false;
     }
 
-    public void onboardEventToPhase2(String postId, Guild guild) {
-        log.info("Phase 2 onboarding triggered for postId: {}", postId);
-        // Phase 2 sign-up setup will be implemented here
+    public void triggerSignUp(String postId, Guild guild) {
+        eventSignUpService.createSignUpMessage(postId, guild);
     }
 
     public void cancelEventDetailTracking(String postId) {
