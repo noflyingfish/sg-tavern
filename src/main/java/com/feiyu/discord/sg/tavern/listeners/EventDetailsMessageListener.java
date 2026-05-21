@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -47,6 +49,16 @@ public class EventDetailsMessageListener extends ListenerAdapter {
                     eventEntity.setUpdatedOn(LocalDateTime.now());
                     eventRepository.save(eventEntity);
                     log.info("Event Details tracked");
+
+                    if (!"MANAGED".equals(eventEntity.getPostStatus())) {
+                        event.getMessage().reply("**Event Detection** — Is this an event post?\n"
+                                        + "_This feature is in beta. Events are still auto-processed nightly._")
+                                .addComponents(ActionRow.of(
+                                        Button.success("event:confirm:confirm:" + eventEntity.getPostId(), "Confirm"),
+                                        Button.danger("event:confirm:cancel:" + eventEntity.getPostId(), "Cancel")
+                                ))
+                                .queue();
+                    }
                 }
             }
         }

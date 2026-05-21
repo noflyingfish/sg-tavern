@@ -29,6 +29,7 @@ public class EventEntity {
     String postStatus;  // NEW / EDITED / MANAGED / PAST / CANCELLED / TBC / DELETED
     LocalDateTime createdOn;
     LocalDateTime updatedOn;
+    LocalDateTime confirmedOn;
     
     // processed data
     String processedEventName;

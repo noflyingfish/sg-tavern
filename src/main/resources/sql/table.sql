@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS upcoming_event(
     eventDetailMsgId VARCHAR(255),
     createdOn TIMESTAMP,
     updatedOn TIMESTAMP,
+    confirmedOn TIMESTAMP,
     processedEventName VARCHAR(255),
     processedEventLocation VARCHAR(255),
     processedEventDateTime TIMESTAMP

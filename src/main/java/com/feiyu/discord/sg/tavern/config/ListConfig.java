@@ -15,5 +15,6 @@ public class ListConfig {
     
     private Set<String> privateChannels;
     private Set<String> privateThreads;
+    private Set<String> eventPilotPostIds;
     
 }
