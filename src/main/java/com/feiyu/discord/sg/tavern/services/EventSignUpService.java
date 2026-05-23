@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +28,7 @@ public class EventSignUpService {
 
     private static final String STATUS_ATTENDING = "ATTENDING";
     private static final String STATUS_KIV = "KIV";
+    private static final String STATUS_WAITLIST = "WAITLIST";
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("EEE, MMM d, yyyy 'at' h:mm a");
 
     private final EventRepository eventRepository;
@@ -52,8 +53,9 @@ public class EventSignUpService {
             detailMsg.replyEmbeds(embed)
                     .addComponents(ActionRow.of(
                             Button.success("event:signup:attend:" + postId, "Sign Up"),
+                            Button.secondary("event:signup:nickname:" + postId, "+ Nickname"),
                             Button.secondary("event:signup:kiv:" + postId, "KIV"),
-                            Button.primary("event:signup:nickname:" + postId, "+ Nickname")
+                            Button.danger("event:signup:setcap:" + postId, "Set Cap")
                     ))
                     .queue(signUpMsg -> {
                         event.setSignUpMsgId(signUpMsg.getId());
@@ -66,32 +68,47 @@ public class EventSignUpService {
     @Transactional
     public String signUp(String postId, String userId, String displayName) {
         var existing = attendanceRepository.findByPostIdAndUserId(postId, userId);
+        boolean full = isAttendingFull(postId);
+        log.info("event is full : {}", full);
 
-        // WITHDRAW event
+        // WITHDRAW from attending
         if (existing.isPresent() && STATUS_ATTENDING.equals(existing.get().getStatus())) {
             attendanceRepository.delete(existing.get());
             attendanceRepository.flush();
             log.info("User : {} - Withdraw event : {}", userId, postId);
             return "WITHDRAWN";
-        //KIV to ATTENDING
-        } else if(existing.isPresent() && STATUS_KIV.equals(existing.get().getStatus())){
+        }
+
+        // WITHDRAW from waitlist
+        if (existing.isPresent() && STATUS_WAITLIST.equals(existing.get().getStatus())) {
+            attendanceRepository.delete(existing.get());
+            attendanceRepository.flush();
+            log.info("User : {} - Withdraw from waitlist : {}", userId, postId);
+            return "WAITLIST_REMOVED";
+        }
+        
+        // KIV to ATTENDING / WAITLIST
+        if (existing.isPresent() && STATUS_KIV.equals(existing.get().getStatus())) {
             EventAttendanceEntity ea = existing.get();
-            ea.setStatus(STATUS_ATTENDING);
+            ea.setStatus(full ? STATUS_WAITLIST : STATUS_ATTENDING);
             ea.setDisplayName(displayName);
             attendanceRepository.save(ea);
-        // ATTENDING
-        } else {
-            EventAttendanceEntity entity = EventAttendanceEntity.builder()
-                    .postId(postId)
-                    .userId(userId)
-                    .displayName(displayName)
-                    .status(STATUS_ATTENDING)
-                    .createdOn(LocalDateTime.now())
-                    .build();
-            attendanceRepository.save(entity);
+            log.info("User : {} - {} attending event : {}", userId, ea.getStatus(), postId);
+            return ea.getStatus();
         }
-        log.info("User : {} - attending event : {}", userId, postId);
-        return "ATTENDING";
+
+        // New sign-up
+        String status = full ? STATUS_WAITLIST : STATUS_ATTENDING;
+        EventAttendanceEntity entity = EventAttendanceEntity.builder()
+                .postId(postId)
+                .userId(userId)
+                .displayName(displayName)
+                .status(status)
+                .createdOn(LocalDateTime.now())
+                .build();
+        attendanceRepository.save(entity);
+        log.info("User : {} - {} event : {}", userId, status, postId);
+        return status;
     }
 
     @Transactional
@@ -104,25 +121,145 @@ public class EventSignUpService {
             attendanceRepository.flush();
             log.info("User : {} - Withdraw kiv : {}", userId, postId);
             return "KIV_REMOVED";
+        }
+
         // ATTENDING to KIV
-        } else if(existing.isPresent() && STATUS_ATTENDING.equals(existing.get().getStatus())){
+        if (existing.isPresent() && STATUS_ATTENDING.equals(existing.get().getStatus())) {
             EventAttendanceEntity ea = existing.get();
             ea.setStatus(STATUS_KIV);
             ea.setDisplayName(displayName);
             attendanceRepository.save(ea);
-        // KIV
-        } else {
-            EventAttendanceEntity entity = EventAttendanceEntity.builder()
-                    .postId(postId)
-                    .userId(userId)
-                    .displayName(displayName)
-                    .status(STATUS_KIV)
-                    .createdOn(LocalDateTime.now())
-                    .build();
-            attendanceRepository.save(entity);
+            log.info("User : {} - kiv event : {}", userId, postId);
+            return "KIV";
         }
+
+        // WAITLIST to KIV
+        if (existing.isPresent() && STATUS_WAITLIST.equals(existing.get().getStatus())) {
+            EventAttendanceEntity ea = existing.get();
+            ea.setStatus(STATUS_KIV);
+            ea.setDisplayName(displayName);
+            attendanceRepository.save(ea);
+            log.info("User : {} - kiv event (from waitlist) : {}", userId, postId);
+            return "KIV";
+        }
+
+        // New KIV
+        EventAttendanceEntity entity = EventAttendanceEntity.builder()
+                .postId(postId)
+                .userId(userId)
+                .displayName(displayName)
+                .status(STATUS_KIV)
+                .createdOn(LocalDateTime.now())
+                .build();
+        attendanceRepository.save(entity);
         log.info("User : {} - kiv event : {}", userId, postId);
         return "KIV";
+    }
+
+    @Transactional
+    public void setCap(String postId, int cap) {
+        EventEntity event = eventRepository.findTopByPostId(postId).orElse(null);
+        if(event != null){
+            event.setMaxCap(cap <= 0 ? null : cap);
+            eventRepository.save(event);
+            log.info("postId : {}, set maxcap : {}", postId, cap);
+        } else {
+            log.error("PostId : {} not detected at setCap", postId);
+        }
+       
+    }
+
+    @Transactional
+    public void changeAttendanceStatus(String postId, List<String> userIds, String newStatus) {
+        List<EventAttendanceEntity> records = attendanceRepository
+                .findByPostIdAndUserIdIn(postId, userIds);
+        records.forEach(r -> r.setStatus(newStatus));
+        attendanceRepository.saveAll(records);
+    }
+
+    @Transactional
+    public String promoteOldestWaitlist(String postId) {
+        var oldest = attendanceRepository
+                .findFirstByPostIdAndStatusOrderByCreatedOnAsc(postId, STATUS_WAITLIST);
+        if (oldest.isPresent()) {
+            EventAttendanceEntity promoted = oldest.get();
+            changeAttendanceStatus(postId, List.of(promoted.getUserId()), STATUS_ATTENDING);
+            log.info("Auto-promoted user {} from waitlist to attending for {}", promoted.getUserId(), postId);
+            return promoted.getUserId();
+        }
+        return null;
+    }
+
+    public String detectRebalanceType(String postId) {
+        EventEntity event = eventRepository.findTopByPostId(postId).orElse(null);
+        if (event == null) return "NONE";
+
+        List<EventAttendanceEntity> all = attendanceRepository.findAllByPostId(postId);
+        long attendingCount = all.stream().filter(a -> STATUS_ATTENDING.equals(a.getStatus())).count();
+        long waitlistCount = all.stream().filter(a -> STATUS_WAITLIST.equals(a.getStatus())).count();
+        Integer maxCap = event.getMaxCap();
+
+        if (maxCap != null && maxCap > 0 && attendingCount > maxCap) {
+            return "DEMOTE";
+        }
+        boolean unlimitedPromote = (maxCap == null || maxCap <= 0) && waitlistCount > 0;
+        boolean cappedPromote = maxCap != null && maxCap > 0 && attendingCount < maxCap && waitlistCount > 0;
+        if (unlimitedPromote || cappedPromote) {
+            return "PROMOTE";
+        }
+        return "NONE";
+    }
+
+    @Transactional
+    public List<String> applyRebalance(String postId) {
+        EventEntity event = eventRepository.findTopByPostId(postId).orElse(null);
+        if (event == null) return List.of();
+
+        List<EventAttendanceEntity> all = attendanceRepository.findAllByPostId(postId);
+        long attendingCount = all.stream().filter(a -> STATUS_ATTENDING.equals(a.getStatus())).count();
+        Integer maxCap = event.getMaxCap();
+
+        // Demotion: attending count exceeds cap
+        if (maxCap != null && maxCap > 0 && attendingCount > maxCap) {
+            long excess = attendingCount - maxCap;
+            List<EventAttendanceEntity> attending = attendanceRepository
+                    .findByPostIdAndStatusOrderByCreatedOnDesc(postId, STATUS_ATTENDING);
+            List<EventAttendanceEntity> toDemote = attending.subList(0, (int) excess);
+            List<String> demotedIds = toDemote.stream().map(EventAttendanceEntity::getUserId).toList();
+            changeAttendanceStatus(postId, demotedIds, STATUS_WAITLIST);
+            log.info("Demoted {} users to waitlist for postId: {}", toDemote.size(), postId);
+            return demotedIds;
+        }
+
+        // Promotion: spots available or unlimited
+        boolean unlimitedPromote = (maxCap == null || maxCap <= 0);
+        boolean cappedPromote = maxCap != null && maxCap > 0 && attendingCount < maxCap;
+        if (unlimitedPromote || cappedPromote) {
+            List<EventAttendanceEntity> waitlist = attendanceRepository
+                    .findByPostIdAndStatusOrderByCreatedOnAsc(postId, STATUS_WAITLIST);
+            long spots = unlimitedPromote ? waitlist.size() : maxCap - attendingCount;
+            int promoteCount = (int) Math.min(spots, waitlist.size());
+            if (promoteCount == 0) return List.of();
+            List<EventAttendanceEntity> toPromote = waitlist.subList(0, promoteCount);
+            List<String> promotedIds = toPromote.stream().map(EventAttendanceEntity::getUserId).toList();
+            changeAttendanceStatus(postId, promotedIds, STATUS_ATTENDING);
+            log.info("Promoted {} users to attending for postId: {}", toPromote.size(), postId);
+            return promotedIds;
+        }
+
+        return List.of();
+    }
+
+    private boolean isAttendingFull(String postId) {
+        EventEntity event = eventRepository.findTopByPostId(postId).orElse(null);
+        if (event == null || event.getMaxCap() == null || event.getMaxCap() <= 0) {
+            return false;
+        }
+        List<EventAttendanceEntity> all = attendanceRepository.findAllByPostId(postId);
+        long attendingCount = all.stream()
+                .filter(a -> STATUS_ATTENDING.equals(a.getStatus()))
+                .count();
+        return attendingCount >= event.getMaxCap();
     }
 
     public MessageEmbed renderEmbed(String postId) {
@@ -134,28 +271,36 @@ public class EventSignUpService {
                 .filter(a -> STATUS_ATTENDING.equals(a.getStatus())).collect(Collectors.toList());
         List<EventAttendanceEntity> kivList = attendees.stream()
                 .filter(a -> STATUS_KIV.equals(a.getStatus())).collect(Collectors.toList());
-        List<EventAttendanceEntity> waitList = new ArrayList<>();
+        List<EventAttendanceEntity> waitList = attendees.stream()
+                .filter(a -> STATUS_WAITLIST.equals(a.getStatus()))
+                .sorted(Comparator.comparing(EventAttendanceEntity::getCreatedOn))
+                .collect(Collectors.toList());
 
         StringBuilder sb = new StringBuilder();
         sb.append(event.getProcessedEventLocation() != null ? event.getProcessedEventLocation() : "—");
         sb.append("\n");
         sb.append(event.getProcessedEventDateTime() != null ? event.getProcessedEventDateTime().format(DATE_FMT) : "—");
-        
+
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle(event.getProcessedEventName() != null ? event.getProcessedEventName() : "Event Sign-Up")
                 .setDescription(sb.toString());
-        embed.addField("Attending (" + attending.size() + ")",
+
+        String attendingTitle = "Attending (" + attending.size() + ")";
+        if (event.getMaxCap() != null && event.getMaxCap() > 0) {
+            attendingTitle = "Attending (" + attending.size() + "/" + event.getMaxCap() + ")";
+        }
+        embed.addField(attendingTitle,
                 attending.isEmpty() ? "—" : attending.stream().map(a -> "• " + a.getDisplayName()).collect(Collectors.joining("\n")),
                 false);
 
         if(!kivList.isEmpty()) {
             embed.addField("KIV (" + kivList.size() + ")",
-                    kivList.isEmpty() ? "—" : kivList.stream().map(a -> "• " + a.getDisplayName()).collect(Collectors.joining("\n")),
+                    kivList.stream().map(a -> "• " + a.getDisplayName()).collect(Collectors.joining("\n")),
                     false);
         }
         if(!waitList.isEmpty()) {
-            embed.addField("KIV (" + waitList.size() + ")",
-                    waitList.isEmpty() ? "—" : waitList.stream().map(a -> "• " + a.getDisplayName()).collect(Collectors.joining("\n")),
+            embed.addField("Waitlist (" + waitList.size() + ")",
+                    waitList.stream().map(a -> "• " + a.getDisplayName()).collect(Collectors.joining("\n")),
                     false);
         }
 

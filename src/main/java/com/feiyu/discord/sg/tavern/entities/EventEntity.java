@@ -25,7 +25,8 @@ public class EventEntity {
     String postUrl;
     String eventDetailMsgId;
     String signUpMsgId;
-    
+    Integer maxCap;
+
     // for admin usage, entity meta data
     String postStatus;  // NEW / EDITED / MANAGED / PAST / CANCELLED / TBC / DELETED
     LocalDateTime createdOn;
