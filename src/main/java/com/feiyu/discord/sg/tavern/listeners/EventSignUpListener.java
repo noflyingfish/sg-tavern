@@ -88,12 +88,9 @@ public class EventSignUpListener extends ListenerAdapter {
             // Reply to cap change
             event.getHook().setEphemeral(true).sendMessage("Cap set to " + capMsg + ".").queue();
             // Message to affected users (sent to channel, not ephemeral)
-            if ("DEMOTE".equals(type)) {
+            if ("DEMOTE".equals(type) && !affected.isEmpty()) {
                 String tags = affected.stream().map(id -> "<@" + id + ">").collect(Collectors.joining(" "));
                 event.getChannel().sendMessage(tags + " moved to waitlist.").queue();
-            } else if ("PROMOTE".equals(type)) {
-                String tags = affected.stream().map(id -> "<@" + id + ">").collect(Collectors.joining(" "));
-                event.getChannel().sendMessage(tags + " moved from waitlist.").queue();
             }
         }
     }
@@ -110,14 +107,6 @@ public class EventSignUpListener extends ListenerAdapter {
             default -> "Signed up!";
         };
         event.getHook().sendMessage(msg).setEphemeral(true).queue();
-
-        if ("WITHDRAWN".equals(result)) {
-            String promoted = eventSignUpService.promoteOldestWaitlist(postId);
-            if (promoted != null) {
-                event.getHook().sendMessage("<@" + promoted + "> has been auto-promoted from the waitlist!").queue();
-            }
-        }
-
         eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
     }
 

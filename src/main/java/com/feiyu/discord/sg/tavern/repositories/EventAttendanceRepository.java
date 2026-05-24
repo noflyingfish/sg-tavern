@@ -16,12 +16,6 @@ public interface EventAttendanceRepository extends JpaRepository<EventAttendance
 
     void deleteByPostIdAndUserId(String postId, String userId);
 
-    Optional<EventAttendanceEntity> findFirstByPostIdAndStatusOrderByCreatedOnAsc(String postId, String status);
-
     List<EventAttendanceEntity> findByPostIdAndStatusOrderByCreatedOnDesc(String postId, String status);
-
-    List<EventAttendanceEntity> findByPostIdAndStatusOrderByCreatedOnAsc(String postId, String status);
-
-    List<EventAttendanceEntity> findByPostIdAndUserIdIn(String postId, List<String> userIds);
 
 }

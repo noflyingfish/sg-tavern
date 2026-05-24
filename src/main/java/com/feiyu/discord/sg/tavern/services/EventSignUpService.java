@@ -181,43 +181,16 @@ public class EventSignUpService {
        
     }
 
-    @Transactional
-    public void changeAttendanceStatus(String postId, List<String> userIds, String newStatus) {
-        List<EventAttendanceEntity> records = attendanceRepository
-                .findByPostIdAndUserIdIn(postId, userIds);
-        records.forEach(r -> r.setStatus(newStatus));
-        attendanceRepository.saveAll(records);
-    }
-
-    @Transactional
-    public String promoteOldestWaitlist(String postId) {
-        var oldest = attendanceRepository
-                .findFirstByPostIdAndStatusOrderByCreatedOnAsc(postId, STATUS_WAITLIST);
-        if (oldest.isPresent()) {
-            EventAttendanceEntity promoted = oldest.get();
-            changeAttendanceStatus(postId, List.of(promoted.getUserId()), STATUS_ATTENDING);
-            log.info("Auto-promoted user {} from waitlist to attending for {}", promoted.getUserId(), postId);
-            return promoted.getUserId();
-        }
-        return null;
-    }
-
     public String detectRebalanceType(String postId) {
         EventEntity event = eventRepository.findTopByPostId(postId).orElse(null);
         if (event == null) return "NONE";
 
         List<EventAttendanceEntity> all = attendanceRepository.findAllByPostId(postId);
         long attendingCount = all.stream().filter(a -> STATUS_ATTENDING.equals(a.getStatus())).count();
-        long waitlistCount = all.stream().filter(a -> STATUS_WAITLIST.equals(a.getStatus())).count();
         Integer maxCap = event.getMaxCap();
 
         if (maxCap != null && maxCap > 0 && attendingCount > maxCap) {
             return "DEMOTE";
-        }
-        boolean unlimitedPromote = (maxCap == null || maxCap <= 0) && waitlistCount > 0;
-        boolean cappedPromote = maxCap != null && maxCap > 0 && attendingCount < maxCap && waitlistCount > 0;
-        if (unlimitedPromote || cappedPromote) {
-            return "PROMOTE";
         }
         return "NONE";
     }
@@ -231,32 +204,16 @@ public class EventSignUpService {
         long attendingCount = all.stream().filter(a -> STATUS_ATTENDING.equals(a.getStatus())).count();
         Integer maxCap = event.getMaxCap();
 
-        // Demotion: attending count exceeds cap
         if (maxCap != null && maxCap > 0 && attendingCount > maxCap) {
             long excess = attendingCount - maxCap;
             List<EventAttendanceEntity> attending = attendanceRepository
                     .findByPostIdAndStatusOrderByCreatedOnDesc(postId, STATUS_ATTENDING);
             List<EventAttendanceEntity> toDemote = attending.subList(0, (int) excess);
+            toDemote.forEach(r -> r.setStatus(STATUS_WAITLIST));
+            attendanceRepository.saveAll(toDemote);
             List<String> demotedIds = toDemote.stream().map(EventAttendanceEntity::getUserId).toList();
-            changeAttendanceStatus(postId, demotedIds, STATUS_WAITLIST);
             log.info("Demoted {} users to waitlist for postId: {}", toDemote.size(), postId);
             return demotedIds;
-        }
-
-        // Promotion: spots available or unlimited
-        boolean unlimitedPromote = (maxCap == null || maxCap <= 0);
-        boolean cappedPromote = maxCap != null && maxCap > 0 && attendingCount < maxCap;
-        if (unlimitedPromote || cappedPromote) {
-            List<EventAttendanceEntity> waitlist = attendanceRepository
-                    .findByPostIdAndStatusOrderByCreatedOnAsc(postId, STATUS_WAITLIST);
-            long spots = unlimitedPromote ? waitlist.size() : maxCap - attendingCount;
-            int promoteCount = (int) Math.min(spots, waitlist.size());
-            if (promoteCount == 0) return List.of();
-            List<EventAttendanceEntity> toPromote = waitlist.subList(0, promoteCount);
-            List<String> promotedIds = toPromote.stream().map(EventAttendanceEntity::getUserId).toList();
-            changeAttendanceStatus(postId, promotedIds, STATUS_ATTENDING);
-            log.info("Promoted {} users to attending for postId: {}", toPromote.size(), postId);
-            return promotedIds;
         }
 
         return List.of();
