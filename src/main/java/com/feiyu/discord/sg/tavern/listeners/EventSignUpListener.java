@@ -60,9 +60,13 @@ public class EventSignUpListener extends ListenerAdapter {
             String postId = modalId.substring(MODAL_PREFIX.length());
             String nickname = event.getValue("nickname").getAsString();
 
-            eventSignUpService.signUp(postId, event.getUser().getId(), nickname);
-            eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
-            event.getHook().sendMessage("Signed up as **" + nickname + "**!").setEphemeral(true).queue();
+            boolean updated = eventSignUpService.updateDisplayName(postId, event.getUser().getId(), nickname);
+            if (updated) {
+                eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
+                event.getHook().sendMessage("Nickname updated to **" + nickname + "**!").setEphemeral(true).queue();
+            } else {
+                event.getHook().sendMessage("Please sign up for the event first.").setEphemeral(true).queue();
+            }
         }
 
         if (modalId.startsWith(MODAL_SET_CAP_PREFIX)) {
@@ -151,7 +155,7 @@ public class EventSignUpListener extends ListenerAdapter {
 
         Label label = Label.of("Nickname", nicknameInput);
 
-        Modal modal = Modal.create(MODAL_PREFIX + postId, "Sign Up with Nickname")
+        Modal modal = Modal.create(MODAL_PREFIX + postId, "Set Nickname")
                 .addComponents(label)
                 .build();
 

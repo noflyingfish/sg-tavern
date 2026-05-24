@@ -66,6 +66,18 @@ public class EventSignUpService {
     }
 
     @Transactional
+    public boolean updateDisplayName(String postId, String userId, String displayName) {
+        var existing = attendanceRepository.findByPostIdAndUserId(postId, userId);
+        if (existing.isPresent()) {
+            existing.get().setDisplayName(displayName);
+            attendanceRepository.save(existing.get());
+            log.info("User : {} - updated nickname to {} for event : {}", userId, displayName, postId);
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional
     public String signUp(String postId, String userId, String displayName) {
         var existing = attendanceRepository.findByPostIdAndUserId(postId, userId);
         boolean full = isAttendingFull(postId);
