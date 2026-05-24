@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS event_attendance(
     userId VARCHAR(255) NOT NULL,
     displayName VARCHAR(255),
     status VARCHAR(32) NOT NULL,
-    createdOn DATETIME,
-    CONSTRAINT uk_attendance_user UNIQUE (postId, userId)
+    createdOn DATETIME
 );
+
+ALTER TABLE event_attendance ADD COLUMN isMain BIT NOT NULL DEFAULT 0;

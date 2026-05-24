@@ -27,6 +27,7 @@ public class EventAttendanceEntity {
     String userId;
     String displayName;
     String status;
+    Boolean isMain;
     LocalDateTime createdOn;
 
 }

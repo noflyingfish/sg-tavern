@@ -23,9 +23,8 @@ public class EventSignUpListener extends ListenerAdapter {
 
     private static final String ATTEND_PREFIX = "event:signup:attend:";
     private static final String KIV_PREFIX = "event:signup:kiv:";
-    private static final String NICKNAME_PREFIX = "event:signup:nickname:";
+    private static final String RESERVE_PREFIX = "event:signup:reserve:";
     private static final String SET_CAP_PREFIX = "event:signup:setcap:";
-    private static final String MODAL_PREFIX = "event:signup:modal:nickname:";
     private static final String MODAL_SET_CAP_PREFIX = "event:signup:modal:setcap:";
 
     private final EventSignUpService eventSignUpService;
@@ -42,8 +41,8 @@ public class EventSignUpListener extends ListenerAdapter {
             handleKiv(event, componentId.substring(KIV_PREFIX.length()));
             return;
         }
-        if (componentId.startsWith(NICKNAME_PREFIX)) {
-            handleNickname(event, componentId.substring(NICKNAME_PREFIX.length()));
+        if (componentId.startsWith(RESERVE_PREFIX)) {
+            handleReserve(event, componentId.substring(RESERVE_PREFIX.length()));
             return;
         }
         if (componentId.startsWith(SET_CAP_PREFIX)) {
@@ -56,19 +55,6 @@ public class EventSignUpListener extends ListenerAdapter {
         String modalId = event.getModalId();
         event.deferReply(true).queue();
         
-        if (modalId.startsWith(MODAL_PREFIX)) {
-            String postId = modalId.substring(MODAL_PREFIX.length());
-            String nickname = event.getValue("nickname").getAsString();
-
-            boolean updated = eventSignUpService.updateDisplayName(postId, event.getUser().getId(), nickname);
-            if (updated) {
-                eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
-                event.getHook().sendMessage("Nickname updated to **" + nickname + "**!").setEphemeral(true).queue();
-            } else {
-                event.getHook().sendMessage("Please sign up for the event first.").setEphemeral(true).queue();
-            }
-        }
-
         if (modalId.startsWith(MODAL_SET_CAP_PREFIX)) {
             String postId = modalId.substring(MODAL_SET_CAP_PREFIX.length());
             String capStr = event.getValue("cap_number").getAsString().trim();
@@ -135,19 +121,14 @@ public class EventSignUpListener extends ListenerAdapter {
         event.replyModal(modal).queue();
     }
 
-    private void handleNickname(ButtonInteractionEvent event, String postId) {
-        TextInput nicknameInput = TextInput.create("nickname", TextInputStyle.SHORT)
-                .setRequired(true)
-                .setMaxLength(32)
-                .setPlaceholder("Enter your nickname")
-                .build();
-
-        Label label = Label.of("Nickname", nicknameInput);
-
-        Modal modal = Modal.create(MODAL_PREFIX + postId, "Set Nickname")
-                .addComponents(label)
-                .build();
-
-        event.replyModal(modal).queue();
+    private void handleReserve(ButtonInteractionEvent event, String postId) {
+        event.deferReply(true).queue();
+        String remark = event.getMember().getEffectiveName() + " +1";
+        String status = eventSignUpService.reserveSlot(postId, event.getUser().getId(), remark);
+        eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
+        String msg = "WAITLIST".equals(status)
+                ? "Reserved slot (waitlist — event is full)."
+                : "Reserved slot!";
+        event.getHook().sendMessage(msg).setEphemeral(true).queue();
     }
 }

@@ -53,7 +53,7 @@ public class EventSignUpService {
             detailMsg.replyEmbeds(embed)
                     .addComponents(ActionRow.of(
                             Button.success("event:signup:attend:" + postId, "Sign Up"),
-                            Button.secondary("event:signup:nickname:" + postId, "+ Nickname"),
+                            Button.primary("event:signup:reserve:" + postId, "+1"),
                             Button.secondary("event:signup:kiv:" + postId, "KIV"),
                             Button.danger("event:signup:setcap:" + postId, "Set Cap")
                     ))
@@ -77,13 +77,32 @@ public class EventSignUpService {
         return false;
     }
 
+    // Only Add to the list
+    @Transactional
+    public String reserveSlot(String postId, String userId, String remark) {
+        boolean full = isAttendingFull(postId);
+        String status = full ? STATUS_WAITLIST : STATUS_ATTENDING;
+        EventAttendanceEntity entity = EventAttendanceEntity.builder()
+                .postId(postId)
+                .userId(userId)
+                .displayName(remark)
+                .status(status)
+                .isMain(false)
+                .createdOn(LocalDateTime.now())
+                .build();
+        attendanceRepository.save(entity);
+        log.info("User : {} - reserved slot '{}' [{}] for event : {}", userId, remark, status, postId);
+        return status;
+    }
+
+    // Bidirectional Add/Remove depending on current state
     @Transactional
     public String signUp(String postId, String userId, String displayName) {
-        var existing = attendanceRepository.findByPostIdAndUserId(postId, userId);
+        var existing = attendanceRepository.findByPostIdAndUserIdAndIsMain(postId, userId, true);
         boolean full = isAttendingFull(postId);
         log.info("event is full : {}", full);
 
-        // WITHDRAW from attending
+        // WITHDRAW from attending (main slot only)
         if (existing.isPresent() && STATUS_ATTENDING.equals(existing.get().getStatus())) {
             attendanceRepository.delete(existing.get());
             attendanceRepository.flush();
@@ -91,15 +110,15 @@ public class EventSignUpService {
             return "WITHDRAWN";
         }
 
-        // WITHDRAW from waitlist
+        // WITHDRAW from waitlist (main slot only)
         if (existing.isPresent() && STATUS_WAITLIST.equals(existing.get().getStatus())) {
             attendanceRepository.delete(existing.get());
             attendanceRepository.flush();
             log.info("User : {} - Withdraw from waitlist : {}", userId, postId);
             return "WAITLIST_REMOVED";
         }
-        
-        // KIV to ATTENDING / WAITLIST
+
+        // KIV to ATTENDING / WAITLIST (main slot only)
         if (existing.isPresent() && STATUS_KIV.equals(existing.get().getStatus())) {
             EventAttendanceEntity ea = existing.get();
             ea.setStatus(full ? STATUS_WAITLIST : STATUS_ATTENDING);
@@ -116,6 +135,7 @@ public class EventSignUpService {
                 .userId(userId)
                 .displayName(displayName)
                 .status(status)
+                .isMain(true)
                 .createdOn(LocalDateTime.now())
                 .build();
         attendanceRepository.save(entity);
