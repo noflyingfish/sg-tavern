@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.components.buttons.Button;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.Color;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -52,12 +53,14 @@ public class EventSignUpService {
         thread.retrieveMessageById(event.getEventDetailMsgId()).queue(detailMsg -> {
             detailMsg.replyEmbeds(embed)
                     .addComponents(ActionRow.of(
-                            Button.success("event:signup:attend:" + postId, "Sign Up"),
-                            Button.primary("event:signup:reserve:" + postId, "+1"),
+                            Button.success("event:signup:attend:" + postId, "(un)Sign Up"),
+                            Button.primary("event:signup:reserve:" + postId, "Chope another slot"),
                             Button.secondary("event:signup:kiv:" + postId, "KIV"),
+                            Button.secondary("event:signup:myslots:" + postId, "My Slots"),
                             Button.danger("event:signup:setcap:" + postId, "Set Cap")
                     ))
                     .queue(signUpMsg -> {
+                        signUpMsg.pin().queue();
                         event.setSignUpMsgId(signUpMsg.getId());
                         eventRepository.save(event);
                         log.info("Sign-up form created for {}: msgId={}", postId, signUpMsg.getId());
@@ -65,16 +68,47 @@ public class EventSignUpService {
         });
     }
 
+    public List<EventAttendanceEntity> getUserSlots(String postId, String userId) {
+        return attendanceRepository.findAllByPostIdAndUserId(postId, userId);
+    }
+
+    public EventAttendanceEntity getSlotById(Long attendanceId) {
+        return attendanceRepository.findById(attendanceId).orElse(null);
+    }
+
     @Transactional
-    public boolean updateDisplayName(String postId, String userId, String displayName) {
-        var existing = attendanceRepository.findByPostIdAndUserId(postId, userId);
-        if (existing.isPresent()) {
-            existing.get().setDisplayName(displayName);
-            attendanceRepository.save(existing.get());
-            log.info("User : {} - updated nickname to {} for event : {}", userId, displayName, postId);
+    public boolean editSlotDisplayName(Long attendanceId, String displayName) {
+        var slot = attendanceRepository.findById(attendanceId);
+        if (slot.isPresent()) {
+            slot.get().setDisplayName(displayName);
+            attendanceRepository.save(slot.get());
+            log.info("Updated display name : {}", slot);
             return true;
         }
         return false;
+    }
+
+    @Transactional
+    public String removeSlot(Long attendanceId) {
+        EventAttendanceEntity slot = attendanceRepository.findById(attendanceId).orElse(null);
+        if (slot == null) return null;
+        String postId = slot.getPostId();
+        attendanceRepository.deleteById(attendanceId);
+        attendanceRepository.flush();
+        log.info("Removed from event : {}", slot);
+        return postId;
+    }
+
+    @Transactional
+    public String promoteSlot(Long attendanceId) {
+        EventAttendanceEntity slot = attendanceRepository.findById(attendanceId).orElse(null);
+        if (slot == null) return "NOT_FOUND";
+        if (STATUS_ATTENDING.equals(slot.getStatus())) return "ALREADY_ATTENDING";
+        if (isAttendingFull(slot.getPostId())) return "FULL";
+        slot.setStatus(STATUS_ATTENDING);
+        attendanceRepository.save(slot);
+        log.info("Waitlist to Attending : {}", slot);
+        return "PROMOTED";
     }
 
     // Only Add to the list
@@ -104,17 +138,13 @@ public class EventSignUpService {
 
         // WITHDRAW from attending (main slot only)
         if (existing.isPresent() && STATUS_ATTENDING.equals(existing.get().getStatus())) {
-            attendanceRepository.delete(existing.get());
-            attendanceRepository.flush();
-            log.info("User : {} - Withdraw event : {}", userId, postId);
+            removeSlot(existing.get().getId());
             return "WITHDRAWN";
         }
 
         // WITHDRAW from waitlist (main slot only)
         if (existing.isPresent() && STATUS_WAITLIST.equals(existing.get().getStatus())) {
-            attendanceRepository.delete(existing.get());
-            attendanceRepository.flush();
-            log.info("User : {} - Withdraw from waitlist : {}", userId, postId);
+            removeSlot(existing.get().getId());
             return "WAITLIST_REMOVED";
         }
 
@@ -149,9 +179,7 @@ public class EventSignUpService {
 
         // REMOVE KIV
         if (existing.isPresent() && STATUS_KIV.equals(existing.get().getStatus())) {
-            attendanceRepository.delete(existing.get());
-            attendanceRepository.flush();
-            log.info("User : {} - Withdraw kiv : {}", userId, postId);
+            removeSlot(existing.get().getId());
             return "KIV_REMOVED";
         }
 
@@ -293,7 +321,7 @@ public class EventSignUpService {
                     false);
         }
 
-        embed.setColor(0x00FF00);
+        embed.setColor(Color.GREEN);
         return embed.build();
     }
 
