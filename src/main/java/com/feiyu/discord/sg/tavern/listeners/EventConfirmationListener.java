@@ -2,6 +2,7 @@ package com.feiyu.discord.sg.tavern.listeners;
 
 import com.feiyu.discord.sg.tavern.config.ListConfig;
 import com.feiyu.discord.sg.tavern.services.EventService;
+import com.feiyu.discord.sg.tavern.services.MessageService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -18,6 +19,7 @@ public class EventConfirmationListener extends ListenerAdapter {
     private static final String CANCEL_PREFIX = "event:confirm:cancel:";
 
     private final EventService eventService;
+    private final MessageService messageService;
     private final ListConfig listConfig;
 
     @Override
@@ -41,6 +43,9 @@ public class EventConfirmationListener extends ListenerAdapter {
         if (success) {
             event.getHook().sendMessage("Event confirmed and details extracted!")
                     .setEphemeral(true).queue();
+
+            String adminMessage = "New event triggered : " + event.getChannel().asThreadChannel().getJumpUrl();;
+            messageService.sendAdminChannelMessage(event.getGuild(), adminMessage);
 
             if (listConfig.getEventPilotPostIds().contains(postId)) {
                 eventService.triggerSignUp(postId, event.getGuild());

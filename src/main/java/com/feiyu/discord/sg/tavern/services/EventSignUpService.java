@@ -307,17 +307,17 @@ public class EventSignUpService {
             attendingTitle = "Attending (" + attending.size() + "/" + event.getMaxCap() + ")";
         }
         embed.addField(attendingTitle,
-                attending.isEmpty() ? "—" : attending.stream().map(a -> "• " + a.getDisplayName()).collect(Collectors.joining("\n")),
+                attending.isEmpty() ? "—" : attending.stream().map(a -> "• " + a.getDisplayName() + " - <@" + a.getUserId() + ">").collect(Collectors.joining("\n")),
                 false);
 
         if(!kivList.isEmpty()) {
             embed.addField("KIV (" + kivList.size() + ")",
-                    kivList.stream().map(a -> "• " + a.getDisplayName()).collect(Collectors.joining("\n")),
+                    kivList.stream().map(a -> "• " + a.getDisplayName() + " - <@" + a.getUserId() + ">").collect(Collectors.joining("\n")),
                     false);
         }
         if(!waitList.isEmpty()) {
             embed.addField("Waitlist (" + waitList.size() + ")",
-                    waitList.stream().map(a -> "• " + a.getDisplayName()).collect(Collectors.joining("\n")),
+                    waitList.stream().map(a -> "• " + a.getDisplayName() + " - <@" + a.getUserId() + ">").collect(Collectors.joining("\n")),
                     false);
         }
 
