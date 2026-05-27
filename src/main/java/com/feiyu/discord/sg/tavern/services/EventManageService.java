@@ -1,0 +1,96 @@
+package com.feiyu.discord.sg.tavern.services;
+
+import com.feiyu.discord.sg.tavern.entities.EventEntity;
+import com.feiyu.discord.sg.tavern.repositories.EventRepository;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.entities.Guild;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Optional;
+
+@Slf4j
+@Service
+@AllArgsConstructor
+public class EventManageService {
+
+    private static final String EXPECTED_FORMAT = "yyyy-MM-dd HH:mm";
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(EXPECTED_FORMAT);
+
+    private final EventRepository eventRepository;
+    private final GptService gptService;
+
+    public Optional<EventEntity> getEvent(String postId) {
+        return eventRepository.findTopByPostId(postId);
+    }
+
+    @Transactional
+    public EventEntity updateEvent(String postId, String eventName, String eventLocation,
+                                    String eventDateTime, Integer maxCap) {
+        EventEntity entity = eventRepository.findTopByPostId(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found for postId: " + postId));
+
+        if (eventName != null && !eventName.isBlank()) {
+            entity.setProcessedEventName(eventName.trim());
+        }
+        if (eventLocation != null && !eventLocation.isBlank()) {
+            entity.setProcessedEventLocation(eventLocation.trim());
+        }
+        if (eventDateTime != null && !eventDateTime.isBlank()) {
+            try {
+                LocalDateTime parsed = LocalDateTime.parse(eventDateTime.trim(), FORMATTER);
+                entity.setProcessedEventDateTime(parsed);
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid datetime format. Expected: " + EXPECTED_FORMAT);
+            }
+        }
+        if (maxCap != null) {
+            entity.setMaxCap(maxCap <= 0 ? null : maxCap);
+        }
+
+        if (entity.getProcessedEventName() != null &&
+                entity.getProcessedEventLocation() != null &&
+                entity.getProcessedEventDateTime() != null) {
+            entity.setPostStatus("MANAGED");
+        }
+
+        entity.setUpdatedOn(LocalDateTime.now());
+        eventRepository.save(entity);
+        log.info("Event updated for postId: {} | name={} location={} datetime={} maxCap={}",
+                postId, entity.getProcessedEventName(), entity.getProcessedEventLocation(),
+                entity.getProcessedEventDateTime(), entity.getMaxCap());
+        return entity;
+    }
+
+    @Transactional
+    public void resetEventDetailMsg(String postId) {
+        EventEntity entity = eventRepository.findTopByPostId(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found for postId: " + postId));
+        entity.setEventDetailMsgId(null);
+        entity.setUpdatedOn(LocalDateTime.now());
+        eventRepository.save(entity);
+        log.info("Event detail msg reset for postId: {}", postId);
+    }
+
+    @Transactional
+    public void markEventAsPast(String postId) {
+        EventEntity entity = eventRepository.findTopByPostId(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found for postId: " + postId));
+        entity.setPostStatus("PAST");
+        entity.setUpdatedOn(LocalDateTime.now());
+        eventRepository.save(entity);
+        log.info("Event marked as PAST for postId: {}", postId);
+    }
+
+    public void extractEvent(String postId, Guild guild) {
+        EventEntity entity = eventRepository.findTopByPostId(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found for postId: " + postId));
+        gptService.sendGpt(List.of(entity), guild);
+        log.info("Event sent to GPT for postId: {}", postId);
+    }
+}

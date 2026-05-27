@@ -31,7 +31,7 @@ public class NewJoinerScheduler {
     private final MessageService messageService;
     
     @Async
-    @Scheduled(cron = "0 30 0 * * ?", zone = "Asia/Singapore")
+    @Scheduled(cron = "0 10 0 * * ?", zone = "Asia/Singapore")
     public void updateNewbieScheduler() {
         log.info("NewJoinerScheduler.updateNewbieScheduler Start");
 

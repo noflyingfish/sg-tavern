@@ -57,7 +57,7 @@ public class EventSignUpService {
                             Button.primary("event:signup:reserve:" + postId, "Chope another slot"),
                             Button.secondary("event:signup:kiv:" + postId, "KIV"),
                             Button.secondary("event:signup:myslots:" + postId, "My Slots"),
-                            Button.danger("event:signup:setcap:" + postId, "Set Cap")
+                            Button.danger("event:signup:manageevent:" + postId, "Manage Event")
                     ))
                     .queue(signUpMsg -> {
                         signUpMsg.pin().queue();

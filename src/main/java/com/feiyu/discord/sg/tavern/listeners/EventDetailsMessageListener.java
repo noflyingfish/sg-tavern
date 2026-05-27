@@ -51,8 +51,7 @@ public class EventDetailsMessageListener extends ListenerAdapter {
                     log.info("Event Details tracked");
 
                     if (!"MANAGED".equals(eventEntity.getPostStatus())) {
-                        event.getMessage().reply("**Event Detection** — Is this an event post?\n"
-                                        + "_This feature is in beta. Events are still auto-processed nightly._")
+                        event.getMessage().reply("**Event Detection** — Is this an event post?")
                                 .addComponents(ActionRow.of(
                                         Button.success("event:confirm:confirm:" + eventEntity.getPostId(), "Confirm"),
                                         Button.danger("event:confirm:cancel:" + eventEntity.getPostId(), "Cancel")

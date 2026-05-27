@@ -12,12 +12,14 @@ CREATE TABLE IF NOT EXISTS upcoming_event(
     postUrl VARCHAR(255),
     postStatus VARCHAR(255),
     eventDetailMsgId VARCHAR(255),
+    signUpMsgId VARCHAR(255),
     createdOn TIMESTAMP,
     updatedOn TIMESTAMP,
     confirmedOn TIMESTAMP,
     processedEventName VARCHAR(255),
     processedEventLocation VARCHAR(255),
-    processedEventDateTime TIMESTAMP
+    processedEventDateTime TIMESTAMP,
+    maxCap INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS message_reference(
@@ -83,16 +85,12 @@ CREATE TABLE IF NOT EXISTS poll_vote(
     CONSTRAINT uk_poll_vote_selection UNIQUE (pollId, voterUserId, optionNumber)
 );
 
-ALTER TABLE upcoming_event ADD COLUMN signUpMsgId VARCHAR(255) NULL;
-ALTER TABLE upcoming_event ADD COLUMN maxCap INTEGER NULL;
-
 CREATE TABLE IF NOT EXISTS event_attendance(
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     postId VARCHAR(255) NOT NULL,
     userId VARCHAR(255) NOT NULL,
     displayName VARCHAR(255),
     status VARCHAR(32) NOT NULL,
-    createdOn DATETIME
+    isMain BIT NOT NULL DEFAULT 0,
+    createdOn TIMESTAMP
 );
-
-ALTER TABLE event_attendance ADD COLUMN isMain BIT NOT NULL DEFAULT 0;

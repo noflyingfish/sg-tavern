@@ -19,7 +19,7 @@ public class MemberScheduler {
     private final MemberRepository memberRepository;
     
     @Async
-    @Scheduled(cron = "0 0 0 1 * ?", zone = "Asia/Singapore")
+    @Scheduled(cron = "0 5 0 1 * ?", zone = "Asia/Singapore")
     public void inviteLinkCounterScheduler() {
         log.info("MemberScheduler.inviteLinkCounterScheduler Start");
         
