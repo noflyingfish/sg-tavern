@@ -1,10 +1,14 @@
 package com.feiyu.discord.sg.tavern.services;
 
+import com.feiyu.discord.sg.tavern.entities.EventAttendanceEntity;
 import com.feiyu.discord.sg.tavern.entities.EventEntity;
+import com.feiyu.discord.sg.tavern.repositories.EventAttendanceRepository;
 import com.feiyu.discord.sg.tavern.repositories.EventRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,7 @@ public class EventManageService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(EXPECTED_FORMAT);
 
     private final EventRepository eventRepository;
+    private final EventAttendanceRepository attendanceRepository;
     private final GptService gptService;
 
     public Optional<EventEntity> getEvent(String postId) {
@@ -75,6 +80,41 @@ public class EventManageService {
         entity.setUpdatedOn(LocalDateTime.now());
         eventRepository.save(entity);
         log.info("Event detail msg reset for postId: {}", postId);
+    }
+
+    @Transactional
+    public void deleteSignUpForm(String postId, Guild guild) {
+        log.info("Deleting sign-up for postId : {}", postId);
+        
+        EventEntity entity = eventRepository.findTopByPostId(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found for postId: " + postId));
+
+        if (entity.getSignUpMsgId() == null) {
+            // no post recorded to gpt
+            return;
+        }
+
+        ThreadChannel thread = guild.getThreadChannelById(postId);
+        if (thread != null) {
+            Message msg = thread.retrieveMessageById(entity.getSignUpMsgId()).complete();
+            if (msg != null) {
+                //deleting the previous signup message
+                msg.delete().complete();
+            }
+        }
+        
+        List<EventAttendanceEntity> list = attendanceRepository.findAllByPostId(postId);
+        for (EventAttendanceEntity eae : list){
+            log.info("userId : {}, displayedName : {}", eae.getUserId(), eae.getDisplayName());
+        }
+
+        attendanceRepository.deleteAllByPostId(postId);
+        entity.setSignUpMsgId(null);
+        entity.setEventDetailMsgId(null);
+        entity.setPostStatus("EDITED");
+        entity.setUpdatedOn(LocalDateTime.now());
+        eventRepository.save(entity);
+        log.info("Sign-up form + attendance records deleted for postId: {}", postId);
     }
 
     @Transactional
