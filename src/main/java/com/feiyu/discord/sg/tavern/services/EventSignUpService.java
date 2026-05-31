@@ -153,6 +153,7 @@ public class EventSignUpService {
             EventAttendanceEntity ea = existing.get();
             ea.setStatus(full ? STATUS_WAITLIST : STATUS_ATTENDING);
             ea.setDisplayName(displayName);
+            ea.setCreatedOn(LocalDateTime.now());
             attendanceRepository.save(ea);
             log.info("User : {} - {} attending event : {}", userId, ea.getStatus(), postId);
             return ea.getStatus();
@@ -188,6 +189,7 @@ public class EventSignUpService {
             EventAttendanceEntity ea = existing.get();
             ea.setStatus(STATUS_KIV);
             ea.setDisplayName(displayName);
+            ea.setCreatedOn(LocalDateTime.now());
             attendanceRepository.save(ea);
             log.info("User : {} - kiv event : {}", userId, postId);
             return "KIV";
@@ -198,6 +200,7 @@ public class EventSignUpService {
             EventAttendanceEntity ea = existing.get();
             ea.setStatus(STATUS_KIV);
             ea.setDisplayName(displayName);
+            ea.setCreatedOn(LocalDateTime.now());
             attendanceRepository.save(ea);
             log.info("User : {} - kiv event (from waitlist) : {}", userId, postId);
             return "KIV";
@@ -209,6 +212,7 @@ public class EventSignUpService {
                 .userId(userId)
                 .displayName(displayName)
                 .status(STATUS_KIV)
+                .isMain(true)
                 .createdOn(LocalDateTime.now())
                 .build();
         attendanceRepository.save(entity);
