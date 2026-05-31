@@ -26,6 +26,8 @@ public class ValuesConfig {
     private String upcomingEventChannelId;
     @Value("${channelId.events-promo}")
     private String eventsPromoChannelId;
+    @Value("${channelId.promo-yourself}")
+    private String promoYourselfChannelId;
     
     @Value("${userId.owner}")
     private String adminUserId;

@@ -1,6 +1,7 @@
 package com.feiyu.discord.sg.tavern.commands;
 
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
+import com.feiyu.discord.sg.tavern.services.EventService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class EventPingCommand extends ListenerAdapter {
     
     private final ValuesConfig valuesConfig;
+    private final EventService eventService;
     
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
@@ -26,7 +28,7 @@ public class EventPingCommand extends ListenerAdapter {
             
             if (event.getName().equals("everyone")) {
                 
-                log.info("Command - thread - {} - user - {}", event.getChannel().asThreadChannel().getId(), event.getUser().getId());
+                log.info("Command - pingthread - {} - user - {}", event.getChannel().asThreadChannel().getId(), event.getUser().getId());
                 
                 event.reply("Pinging everyone inside this post...")
                         .setEphemeral(true)
@@ -37,6 +39,39 @@ public class EventPingCommand extends ListenerAdapter {
                 event.getChannel()
                         .sendMessage(userName + " pinged @everyone (inside this event)")
                         .queue();
+            }
+        }
+        
+        //check for channel to be public thread in the correct channel
+        if (ChannelType.GUILD_PUBLIC_THREAD.equals(event.getChannelType()) &&
+                valuesConfig.getUpcomingEventChannelId().equals(
+                        event.getChannel().asThreadChannel().getParentChannel().getId())) {
+            
+            if (event.getName().equals("pingreacts")) {
+
+                log.info("Command - pingreacts - {} - user - {}", event.getChannel().asThreadChannel().getId(), event.getUser().getId());
+
+                String messageId = event.getOption("messageid").getAsString();
+
+                event.deferReply(true).queue();
+
+                String pingList = eventService.pingReacts(event.getGuild(), messageId);
+
+                if (pingList == null) {
+                    event.getHook().sendMessage("Message not found :/").setEphemeral(true).queue();
+                    return;
+                }
+
+                if (pingList.isEmpty()) {
+                    event.getHook().sendMessage("No one reacted to that message.").setEphemeral(true).queue();
+                    return;
+                }
+
+                String commandUserMention = event.getMember().getAsMention();
+                String pingMessage = commandUserMention + " pinged " + pingList;
+
+                event.getChannel().sendMessage(pingMessage).queue();
+                event.getHook().sendMessage("Ping done :)").setEphemeral(true).queue();
             }
         }
     }
