@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-05-30
+- Trigger for event reset via post title change with confirmation
+
+## [2.6.0] - 2026-05-28
+- change for event post to be triggered basis from a button instead of scheduler
+- pilot deployment for new event management flow
+- scheduler timing change
+
+## [2.5.1] - 2026-05-21
+- beta change for event post to be triggered basis from a button instead of scheduler
+- pilot list selection for new event management flow
+
+## [2.5.0] - 2026-05-19
+- `/pollanonymous` deployed
+
 ## [2.4.1] - 2026-05-14
 - Huge behind the scene changes for invite link controls and tracking
 

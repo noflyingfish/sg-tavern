@@ -97,9 +97,9 @@ public class EventMonitorScheduler {
         return false; // Keep this EventEntity
     }
     
-    // 1am daily
+    // 12:15am daily
     @Async
-    @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Singapore")
+    @Scheduled(cron = "0 15 0 * * ?", zone = "Asia/Singapore")
     public void pastEventMonitorScheduler() {
         log.info("EventMonitorScheduler.pastEventMonitorScheduler Start");
         Guild guild = jda.getGuildById(valuesConfig.getGuildId());

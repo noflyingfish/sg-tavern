@@ -2,8 +2,7 @@ package com.feiyu.discord.sg.tavern.commands;
 
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
 import com.feiyu.discord.sg.tavern.entities.EventEntity;
-import com.feiyu.discord.sg.tavern.repositories.EventRepository;
-import com.feiyu.discord.sg.tavern.services.GptService;
+import com.feiyu.discord.sg.tavern.services.EventManageService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -16,10 +15,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -27,11 +22,8 @@ import java.util.Optional;
 @AllArgsConstructor
 public class EventManagementCommand extends ListenerAdapter {
     
-    private static final String EXPECTED_FORMAT = "yyyy-MM-dd HH:mm";
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(EXPECTED_FORMAT);
-    private final EventRepository eventRepository;
     private final ValuesConfig valuesConfig;
-    private final GptService gptService;
+    private final EventManageService eventManageService;
     
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
@@ -43,9 +35,9 @@ public class EventManagementCommand extends ListenerAdapter {
             // command - /eventstatus
             if ("eventstatus".equals(event.getName())) {
                 log.info("Command - eventstatus - {}", event.getChannel().asThreadChannel().getId());
-                
-                Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
-                
+
+                Optional<EventEntity> optionalEventEntity = eventManageService.getEvent(event.getChannelId());
+
                 if (optionalEventEntity.isEmpty()) {
                     event.reply("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
@@ -67,7 +59,7 @@ public class EventManagementCommand extends ListenerAdapter {
                             eventEntity.getProcessedEventDateTime() != null
                                     ? eventEntity.getProcessedEventDateTime().toString() : "",
                             false);
-                    if(eventEntity.getEventDetailMsgId() != null) {
+                    if (eventEntity.getEventDetailMsgId() != null) {
                         Message eventDetailMessage = event.getChannel().asThreadChannel()
                                 .retrieveMessageById(eventEntity.getEventDetailMsgId())
                                 .complete();
@@ -76,7 +68,7 @@ public class EventManagementCommand extends ListenerAdapter {
                                 false);
                     }
                     MessageEmbed me = eb.build();
-                    
+
                     event.replyEmbeds(me)
                             .setEphemeral(true)
                             .queue();
@@ -86,68 +78,44 @@ public class EventManagementCommand extends ListenerAdapter {
             // command - /manageevent
             if ("manageevent".equals(event.getName())) {
                 log.info("Command - manageevent - {}", event.getChannel().asThreadChannel().getId());
-                
-                Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
-                
-                if (optionalEventEntity.isEmpty()) {
+
+                if (eventManageService.getEvent(event.getChannelId()).isEmpty()) {
                     event.reply("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
                             .queue();
                 } else {
-                    EventEntity eventEntity = optionalEventEntity.get();
-                    
-                    OptionMapping processedEventName = event.getOption("eventname");
-                    if (processedEventName != null) {
-                        eventEntity.setProcessedEventName(processedEventName.getAsString());
+                    OptionMapping optName = event.getOption("eventname");
+                    OptionMapping optLocation = event.getOption("eventlocation");
+                    OptionMapping optDateTime = event.getOption("eventdatetime");
+
+                    try {
+                        eventManageService.updateEvent(
+                                event.getChannelId(),
+                                optName != null ? optName.getAsString() : null,
+                                optLocation != null ? optLocation.getAsString() : null,
+                                optDateTime != null ? optDateTime.getAsString() : null,
+                                null);
+                        event.reply("Updated!")
+                                .setEphemeral(true)
+                                .queue();
+                    } catch (IllegalArgumentException ex) {
+                        event.reply(ex.getMessage())
+                                .setEphemeral(true)
+                                .queue();
                     }
-                    OptionMapping processedEventLocation = event.getOption("eventlocation");
-                    if (processedEventLocation != null) {
-                        eventEntity.setProcessedEventLocation(processedEventLocation.getAsString());
-                    }
-                    OptionMapping processedEventDateTime = event.getOption("eventdatetime");
-                    if (processedEventDateTime != null) {
-                        String inputDatetime = processedEventDateTime.getAsString().trim();
-                        try {
-                            LocalDateTime newEventDateTime = LocalDateTime.parse(inputDatetime, FORMATTER);
-                            eventEntity.setProcessedEventDateTime(newEventDateTime);
-                        } catch (DateTimeParseException ex) {
-                            event.reply("Please follow this time format exactly \"yyyy-MM-dd HH:mm\" (there is a space between dd HH)")
-                                    .setEphemeral(true)
-                                    .queue();
-                            return;
-                        }
-                    }
-                    
-                    if (eventEntity.getProcessedEventName() != null &&
-                            eventEntity.getProcessedEventLocation() != null &&
-                            eventEntity.getProcessedEventDateTime() != null) {
-                        eventEntity.setPostStatus("MANAGED");
-                    }
-                    
-                    eventRepository.save(eventEntity);
-                    event.reply("Updated!")
-                            .setEphemeral(true)
-                            .queue();
                 }
             }
             
             // command - /resetevent
             if ("resetevent".equals(event.getName())) {
                 log.info("Command - resetevent - {}", event.getChannel().asThreadChannel().getId());
-                
-                Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
-                
-                if (optionalEventEntity.isEmpty()) {
-                    event.reply("Not captured. Ping Rain to troubleshoot!")
+                try {
+                    eventManageService.resetEventDetailMsg(event.getChannelId());
+                    event.reply("Event details message id reset")
                             .setEphemeral(true)
                             .queue();
-                } else {
-                    EventEntity eventEntity = optionalEventEntity.get();
-                    eventEntity.setEventDetailMsgId(null);
-                    eventEntity.setUpdatedOn(LocalDateTime.now());
-                    eventRepository.save(eventEntity);
-                    
-                    event.reply("Event details message id reset")
+                } catch (IllegalArgumentException ex) {
+                    event.reply("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
                             .queue();
                 }
@@ -156,39 +124,29 @@ public class EventManagementCommand extends ListenerAdapter {
             // command - /pastevent
             if ("pastevent".equals(event.getName())) {
                 log.info("Command - pastevent - {}", event.getChannel().asThreadChannel().getId());
-                
-                Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
-                
-                if (optionalEventEntity.isEmpty()) {
-                    event.reply("Not captured. Ping Rain to troubleshoot!")
+                try {
+                    eventManageService.markEventAsPast(event.getChannelId());
+                    event.reply("Event status set to PAST")
                             .setEphemeral(true)
                             .queue();
-                } else {
-                    EventEntity eventEntity = optionalEventEntity.get();
-                    eventEntity.setPostStatus("PAST");
-                    eventEntity.setUpdatedOn(LocalDateTime.now());
-                    eventRepository.save(eventEntity);
-                    
-                    event.reply("Event status set to PAST")
+                } catch (IllegalArgumentException ex) {
+                    event.reply("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
                             .queue();
                 }
             }
             
             // command - extractevent
-            if("extractevent".equals(event.getName())){
+            if ("extractevent".equals(event.getName())) {
                 log.info("Command - extractevent - {}", event.getChannel().asThreadChannel().getId());
                 event.deferReply(true).queue();
-                
-                Optional<EventEntity> optionalEventEntity = eventRepository.findTopByPostId(event.getChannelId());
-                
-                if(optionalEventEntity.isEmpty()){
-                    event.reply("Not captured. Ping Rain to troubleshoot!")
+                try {
+                    eventManageService.extractEvent(event.getChannelId(), event.getGuild());
+                    event.getHook().sendMessage("Event sent to gpt")
                             .setEphemeral(true)
                             .queue();
-                } else {
-                    gptService.sendGpt(List.of(optionalEventEntity.get()), event.getGuild());
-                    event.getHook().sendMessage("Event sent to gpt")
+                } catch (IllegalArgumentException ex) {
+                    event.getHook().sendMessage("Not captured. Ping Rain to troubleshoot!")
                             .setEphemeral(true)
                             .queue();
                 }

@@ -31,7 +31,9 @@ public class JdaService {
     private final EventTitleChangeListener eventTitleChangeListener;
     private final EventDetailsMessageListener eventDetailsMessageListener;
     private final NewEventPostListener newEventPostListener;
-    
+    private final EventConfirmationListener eventConfirmationListener;
+    private final EventSignUpListener eventSignUpListener;
+
     @Bean
     public net.dv8tion.jda.api.JDA jda(@Value("${discord.bot.token}") String token) throws InterruptedException {
         // Create and configure the JDA instance
@@ -54,6 +56,8 @@ public class JdaService {
                 .addEventListeners(eventTitleChangeListener)
                 .addEventListeners(eventDetailsMessageListener)
                 .addEventListeners(newEventPostListener)
+                .addEventListeners(eventConfirmationListener)
+                .addEventListeners(eventSignUpListener)
                 .build();
         
         // Optionally wait until the JDA instance is fully ready

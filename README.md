@@ -39,9 +39,13 @@ Whenever someone joined the server. <br>
 Whenever someone left the server. <br>
 
 ### Scheduler Runtime
-0000 - Check newbie count/role <br>
-0100 - Check passed event <br>
-2100 (alt days) - Check intro done <br>
-2300 - Check new/edited event <br>
+0000 - Close expired polls<br>
+0005 - Reset monthly invite counters (1st only)<br>
+0010 - Remove 3+ month newbie role<br>
+0015 - Mark past events as PAST/DELETED<br>
+0600 - Daily event promo embed<br>
+2100 (every 3 days) - Check intro done<br>
+2300 - GPT extract NEW/EDITED events<br>
+
 
 
