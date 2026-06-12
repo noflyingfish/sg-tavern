@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +51,13 @@ public class EventTitleChangeListener extends ListenerAdapter {
             String existingSignUpMsgId = null;
             if (optionalEventEntity.isPresent()) {
                 EventEntity editedEvent = optionalEventEntity.get();
+                editedEvent.setPostName(eventPost.getName());
+                editedEvent.setPostStatus("EDITED");
+                editedEvent.setEventDetailMsgId(null);
+                editedEvent.setUpdatedOn(LocalDateTime.now());
+                
+                eventRepository.save(editedEvent);
+                log.info("Event post updated : {}", eventPost.getName());
                 existingSignUpMsgId = editedEvent.getSignUpMsgId();
             }
             

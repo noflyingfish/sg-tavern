@@ -74,5 +74,47 @@ public class EventPingCommand extends ListenerAdapter {
                 event.getHook().sendMessage("Ping done :)").setEphemeral(true).queue();
             }
         }
+
+        //check for channel to be public thread in the correct channel
+        if (ChannelType.GUILD_PUBLIC_THREAD.equals(event.getChannelType()) &&
+                valuesConfig.getUpcomingEventChannelId().equals(
+                        event.getChannel().asThreadChannel().getParentChannel().getId())) {
+
+            if (event.getName().equals("pingattending")) {
+
+                log.info("Command - pingattending - {} - user - {}",
+                        event.getChannel().asThreadChannel().getId(),
+                        event.getUser().getId());
+
+                String postId = event.getChannel().asThreadChannel().getId();
+                event.deferReply(true).queue();
+
+                String pingList = eventService.pingAttending(postId);
+                String signUpMsgId = eventService.getSignUpMsgId(postId);
+
+                if (signUpMsgId == null) {
+                    event.getHook().sendMessage("not support yet")
+                            .setEphemeral(true).queue();
+                    return;
+                }
+
+                if (pingList.isEmpty()) {
+                    event.getHook().sendMessage("No one is attending this event.")
+                            .setEphemeral(true).queue();
+                    return;
+                }
+
+                String commandUserMention = event.getMember().getAsMention();
+                String pingMessage = commandUserMention
+                        + " has pinged attending members\n" + pingList;
+
+                event.getChannel().asThreadChannel()
+                        .retrieveMessageById(signUpMsgId)
+                        .queue(signUpMsg -> signUpMsg.reply(pingMessage).queue());
+
+                event.getHook().sendMessage("Ping done :)")
+                        .setEphemeral(true).queue();
+            }
+        }
     }
 }

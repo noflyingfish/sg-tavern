@@ -1,7 +1,9 @@
 package com.feiyu.discord.sg.tavern.services;
 
 import com.feiyu.discord.sg.tavern.config.ValuesConfig;
+import com.feiyu.discord.sg.tavern.entities.EventAttendanceEntity;
 import com.feiyu.discord.sg.tavern.entities.EventEntity;
+import com.feiyu.discord.sg.tavern.repositories.EventAttendanceRepository;
 import com.feiyu.discord.sg.tavern.repositories.EventRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final GptService gptService;
     private final EventSignUpService eventSignUpService;
+    private final EventAttendanceRepository attendanceRepository;
 
     public boolean confirmEvent(String postId, Guild guild) {
         EventEntity entity = eventRepository.findTopByPostId(postId).orElse(null);
@@ -97,5 +100,26 @@ public class EventService {
         return reactors.stream()
                 .map(User::getAsMention)
                 .collect(Collectors.joining(" "));
+    }
+
+    public String pingAttending(String postId) {
+        List<EventAttendanceEntity> attending = attendanceRepository
+                .findByPostIdAndStatusOrderByCreatedOnDesc(postId, "ATTENDING");
+
+        if (attending.isEmpty()) {
+            return "";
+        }
+
+        return attending.stream()
+                .map(a -> "<@" + a.getUserId() + ">")
+                .collect(Collectors.joining(" "));
+    }
+
+    public String getSignUpMsgId(String postId) {
+        EventEntity event = eventRepository.findTopByPostId(postId).orElse(null);
+        if (event == null || event.getSignUpMsgId() == null) {
+            return null;
+        }
+        return event.getSignUpMsgId();
     }
 }
