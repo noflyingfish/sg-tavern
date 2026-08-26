@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.4] - 2026-08-27
+- [Event Sign Up] - Setting first trigger of sign up to be always user himself
+- [Event Sign Up] - Auto and manual closing of the form buttons. 
+
 ## [2.6.3] - 2026-06-08
 - `/pingattending` command added
 - bug fix on editing event title not refreshing event detail listener

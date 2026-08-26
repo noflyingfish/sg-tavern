@@ -5,6 +5,7 @@ import com.feiyu.discord.sg.tavern.entities.EventEntity;
 import com.feiyu.discord.sg.tavern.entities.MessageEntity;
 import com.feiyu.discord.sg.tavern.repositories.EventRepository;
 import com.feiyu.discord.sg.tavern.repositories.MessageRepository;
+import com.feiyu.discord.sg.tavern.services.EventSignUpService;
 import com.feiyu.discord.sg.tavern.services.GptService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class EventMonitorScheduler {
     private final EventRepository eventRepository;
     private final MessageRepository messageRepository;
     private final GptService gptService;
+    private final EventSignUpService eventSignUpService;
     
     // 11pm daily
     @Async
@@ -117,6 +119,7 @@ public class EventMonitorScheduler {
             if (eventEntity.getProcessedEventDateTime().isBefore(LocalDateTime.now())) {
                 eventEntity.setPostStatus("PAST");
                 log.info("EventEntity PAST : {} ", eventEntity);
+                eventSignUpService.removeSignUpButtons(eventEntity.getPostId(), guild);
             }
             eventRepository.save(eventEntity);
         }

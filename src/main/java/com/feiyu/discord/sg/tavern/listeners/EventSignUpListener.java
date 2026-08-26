@@ -58,12 +58,12 @@ public class EventSignUpListener extends ListenerAdapter {
             handleAttend(event, componentId.substring(ATTEND_PREFIX.length()));
             return;
         }
-        if (componentId.startsWith(KIV_PREFIX)) {
-            handleKiv(event, componentId.substring(KIV_PREFIX.length()));
-            return;
-        }
         if (componentId.startsWith(RESERVE_PREFIX)) {
             handleReserve(event, componentId.substring(RESERVE_PREFIX.length()));
+            return;
+        }
+        if (componentId.startsWith(KIV_PREFIX)) {
+            handleKiv(event, componentId.substring(KIV_PREFIX.length()));
             return;
         }
         if (componentId.startsWith(MY_SLOTS_PREFIX)) {
@@ -176,6 +176,17 @@ public class EventSignUpListener extends ListenerAdapter {
         eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
     }
     
+    private void handleReserve(ButtonInteractionEvent event, String postId) {
+        event.deferReply(true).queue();
+        String displayName = event.getMember().getEffectiveName();
+        String status = eventSignUpService.reserveSlot(postId, event.getUser().getId(), displayName);
+        eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
+        String msg = "WAITLIST".equals(status)
+                ? "Reserved slot (waitlist — event is full)."
+                : "Reserved slot!";
+        event.getHook().sendMessage(msg).setEphemeral(true).queue();
+    }
+    
     private void handleKiv(ButtonInteractionEvent event, String postId) {
         event.deferReply(true).queue();
         String displayName = event.getMember().getEffectiveName();
@@ -240,17 +251,6 @@ public class EventSignUpListener extends ListenerAdapter {
         if (mapping == null) return null;
         String value = mapping.getAsString();
         return (value != null && !value.isBlank()) ? value.trim() : null;
-    }
-    
-    private void handleReserve(ButtonInteractionEvent event, String postId) {
-        event.deferReply(true).queue();
-        String remark = event.getMember().getEffectiveName() + " +1";
-        String status = eventSignUpService.reserveSlot(postId, event.getUser().getId(), remark);
-        eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
-        String msg = "WAITLIST".equals(status)
-                ? "Reserved slot (waitlist — event is full)."
-                : "Reserved slot!";
-        event.getHook().sendMessage(msg).setEphemeral(true).queue();
     }
     
     private MessageEmbed buildSlotsEmbed(List<EventAttendanceEntity> slots) {
