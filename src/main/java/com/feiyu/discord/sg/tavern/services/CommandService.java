@@ -76,6 +76,9 @@ public class CommandService {
                 .addOption(OptionType.STRING, "messageid", "The ID of the message to check reactions for", true)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.PIN_MESSAGES))
                 .queue();
+        guild.upsertCommand("pingattending", "Ping all attending members in this event post")
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.PIN_MESSAGES))
+                .queue();
         guild.upsertCommand("colour", "Change your name colour (CSS code eg. #FFFFFF) / \"random\"")
                 .addOption(OptionType.STRING, "colour", "CSS code or random", true)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VIEW_CHANNEL))
