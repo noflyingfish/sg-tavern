@@ -29,9 +29,6 @@ import java.util.concurrent.TimeUnit;
 @AllArgsConstructor
 public class EventTitleChangeListener extends ListenerAdapter {
     
-    private static final String CONFIRM_DELETE_FORM_PROMPT =
-            "Sign-up form detected. Delete it to prevent further sign-ups?";
-    
     private final ValuesConfig valuesConfig;
     private final EventRepository eventRepository;
     private final EventManageService eventManageService;
@@ -63,9 +60,9 @@ public class EventTitleChangeListener extends ListenerAdapter {
             
             if (existingSignUpMsgId != null) {
                 eventPost.sendMessage("Make sure you have the event organiser's permission.\n" +
-                                "Deleting signup and attendance is not reversible.")
+                                "Locking sign-up.")
                         .addComponents(ActionRow.of(
-                                Button.danger("event:titlechange:deleteform:" + eventPost.getId(), "Delete Sign-Up Form AND Attendance"),
+                                Button.danger("event:titlechange:deleteform:" + eventPost.getId(), "Close Sign-Up"),
                                 Button.secondary("event:titlechange:canceldelete:" + eventPost.getId(), "Do Nothing")
                         ))
                         .queue();
@@ -91,7 +88,7 @@ public class EventTitleChangeListener extends ListenerAdapter {
         try {
             event.getMessageChannel().sendMessage("Event reset by : " + event.getUser().getName()).queue();
             eventManageService.deleteSignUpForm(postId, event.getGuild());
-            event.getHook().sendMessage("Sign-up form deleted.").setEphemeral(true).queue();
+            event.getHook().sendMessage("Sign-up closed.").setEphemeral(true).queue();
             
             EmbedBuilder eb = new EmbedBuilder();
             eb.setDescription("Post your event details after the title change for it to be captured by the bot :)");

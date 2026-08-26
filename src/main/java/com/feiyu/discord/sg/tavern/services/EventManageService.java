@@ -98,8 +98,8 @@ public class EventManageService {
         if (thread != null) {
             Message msg = thread.retrieveMessageById(entity.getSignUpMsgId()).complete();
             if (msg != null) {
-                //deleting the previous signup message
-                msg.delete().complete();
+                // strip the buttons but keep the message as a record of who attended
+                msg.editMessageEmbeds(msg.getEmbeds()).setComponents(List.of()).complete();
             }
         }
         

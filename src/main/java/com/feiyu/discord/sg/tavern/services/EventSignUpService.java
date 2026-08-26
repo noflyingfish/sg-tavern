@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
@@ -111,21 +112,29 @@ public class EventSignUpService {
         return "PROMOTED";
     }
 
-    // Only Add to the list
+    // "Chope another slot": first click = the user's own sign-up (delegates to signUp);
+    // subsequent clicks reserve an extra slot for a friend ("+1").
     @Transactional
-    public String reserveSlot(String postId, String userId, String remark) {
+    public String reserveSlot(String postId, String userId, String displayName) {
+        boolean hasMainSlot = attendanceRepository
+                .findByPostIdAndUserIdAndIsMain(postId, userId, true)
+                .isPresent();
+        if (!hasMainSlot) {
+            return signUp(postId, userId, displayName);
+        }
+
         boolean full = isAttendingFull(postId);
         String status = full ? STATUS_WAITLIST : STATUS_ATTENDING;
         EventAttendanceEntity entity = EventAttendanceEntity.builder()
                 .postId(postId)
                 .userId(userId)
-                .displayName(remark)
+                .displayName(displayName + " +1")
                 .status(status)
                 .isMain(false)
                 .createdOn(LocalDateTime.now())
                 .build();
         attendanceRepository.save(entity);
-        log.info("User : {} - reserved slot '{}' [{}] for event : {}", userId, remark, status, postId);
+        log.info("User : {} - reserved slot '{}' [{}] for event : {}", userId, entity.getDisplayName(), status, postId);
         return status;
     }
 
@@ -343,5 +352,20 @@ public class EventSignUpService {
         }, failure -> {
             log.warn("Failed to refresh sign-up message for {}: {}", postId, failure.getMessage());
         });
+    }
+
+    // Strip the interaction buttons from the sign-up message (e.g. after the event ends),
+    // keeping the message and its embed intact as a record of who attended.
+    public void removeSignUpButtons(String postId, Guild guild) {
+        EventEntity event = eventRepository.findTopByPostId(postId).orElse(null);
+        if (event == null || event.getSignUpMsgId() == null) return;
+
+        ThreadChannel thread = guild.getThreadChannelById(postId);
+        if (thread == null) return;
+
+        Message msg = thread.retrieveMessageById(event.getSignUpMsgId()).complete();
+        if (msg != null) {
+            msg.editMessageEmbeds(msg.getEmbeds()).setComponents(List.of()).queue();
+        }
     }
 }
