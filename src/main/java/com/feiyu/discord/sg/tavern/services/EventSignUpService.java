@@ -77,6 +77,10 @@ public class EventSignUpService {
         return attendanceRepository.findById(attendanceId).orElse(null);
     }
 
+    public List<EventAttendanceEntity> getAllAttendees(String postId) {
+        return attendanceRepository.findAllByPostId(postId);
+    }
+
     @Transactional
     public boolean editSlotDisplayName(Long attendanceId, String displayName) {
         var slot = attendanceRepository.findById(attendanceId);
@@ -90,14 +94,13 @@ public class EventSignUpService {
     }
 
     @Transactional
-    public String removeSlot(Long attendanceId) {
+    public EventAttendanceEntity removeSlot(Long attendanceId) {
         EventAttendanceEntity slot = attendanceRepository.findById(attendanceId).orElse(null);
         if (slot == null) return null;
-        String postId = slot.getPostId();
         attendanceRepository.deleteById(attendanceId);
         attendanceRepository.flush();
         log.info("Removed from event : {}", slot);
-        return postId;
+        return slot;
     }
 
     @Transactional
