@@ -46,7 +46,12 @@ public class EventSignUpListener extends ListenerAdapter {
     private static final String SLOT_SELECT_PREFIX = "event:slots:select:";
     private static final String BACK_TO_SLOTS_PREFIX = "event:slots:back:";
     private static final String PROMOTE_SLOT_PREFIX = "event:slots:promote:";
-    
+    private static final String MANAGE_EDIT_PREFIX = "event:manage:edit:";
+    private static final String MANAGE_MEMBERS_PREFIX = "event:manage:members:";
+    private static final String MEMBER_SELECT_PREFIX = "event:members:select:";
+    private static final String REMOVE_MEMBER_PREFIX = "event:members:remove:";
+    private static final String MEMBER_BACK_PREFIX = "event:members:back:";
+
     private final EventSignUpService eventSignUpService;
     private final EventManageService eventManageService;
     
@@ -84,6 +89,22 @@ public class EventSignUpListener extends ListenerAdapter {
         }
         if (componentId.startsWith(PROMOTE_SLOT_PREFIX)) {
             handlePromoteSlot(event, componentId.substring(PROMOTE_SLOT_PREFIX.length()));
+            return;
+        }
+        if (componentId.startsWith(MANAGE_EDIT_PREFIX)) {
+            handleManageEdit(event, componentId.substring(MANAGE_EDIT_PREFIX.length()));
+            return;
+        }
+        if (componentId.startsWith(MANAGE_MEMBERS_PREFIX)) {
+            handleManageMembers(event, componentId.substring(MANAGE_MEMBERS_PREFIX.length()));
+            return;
+        }
+        if (componentId.startsWith(REMOVE_MEMBER_PREFIX)) {
+            handleRemoveMember(event, componentId.substring(REMOVE_MEMBER_PREFIX.length()));
+            return;
+        }
+        if (componentId.startsWith(MEMBER_BACK_PREFIX)) {
+            handleMemberBack(event, componentId.substring(MEMBER_BACK_PREFIX.length()));
             return;
         }
         if (componentId.startsWith(MANAGE_EVENT_PREFIX)) {
@@ -156,6 +177,10 @@ public class EventSignUpListener extends ListenerAdapter {
     @Override
     public void onStringSelectInteraction(@NotNull StringSelectInteractionEvent event) {
         String componentId = event.getComponentId();
+        if (componentId.startsWith(MEMBER_SELECT_PREFIX)) {
+            handleMemberSelect(event, componentId.substring(MEMBER_SELECT_PREFIX.length()));
+            return;
+        }
         if (componentId.startsWith(SLOT_SELECT_PREFIX)) {
             handleSlotSelect(event, componentId.substring(SLOT_SELECT_PREFIX.length()));
         }
@@ -197,44 +222,60 @@ public class EventSignUpListener extends ListenerAdapter {
     }
     
     private void handleManageEvent(ButtonInteractionEvent event, String postId) {
-        Optional<EventEntity> optEntity = eventManageService.getEvent(postId);
-        if (optEntity.isEmpty()) {
+        event.deferReply(true).queue();
+        event.getHook().sendMessage("Manage Event")
+                .addComponents(ActionRow.of(
+                        Button.danger(MANAGE_EDIT_PREFIX + postId, "Edit Event Details"),
+                        Button.danger(MANAGE_MEMBERS_PREFIX + postId, "Edit Event Members")))
+                .setEphemeral(true).queue();
+    }
+
+    private void handleManageEdit(ButtonInteractionEvent event, String postId) {
+        Modal modal = buildManageEventModal(postId);
+        if (modal == null) {
             event.reply("Event not found.").setEphemeral(true).queue();
             return;
         }
+        event.replyModal(modal).queue();
+    }
+
+    private Modal buildManageEventModal(String postId) {
+        Optional<EventEntity> optEntity = eventManageService.getEvent(postId);
+        if (optEntity.isEmpty()) {
+            return null;
+        }
         EventEntity entity = optEntity.get();
         log.info("EventEntity extracted : {}", entity);
-        
+
         TextInput nameInput = TextInput.create("event_name", TextInputStyle.SHORT)
                 .setRequired(false)
                 .setMaxLength(100)
                 .setValue(StringUtils.truncateTo(entity.getProcessedEventName(), 100, "No event name detected"))
                 .setPlaceholder("Event Name")
                 .build();
-        
+
         TextInput locationInput = TextInput.create("event_location", TextInputStyle.SHORT)
                 .setRequired(false)
                 .setMaxLength(100)
                 .setValue(StringUtils.truncateTo(entity.getProcessedEventLocation(), 100, "No event location detected"))
                 .setPlaceholder("Event Location")
                 .build();
-        
+
         TextInput dateTimeInput = TextInput.create("event_datetime", TextInputStyle.SHORT)
                 .setRequired(false)
                 .setMaxLength(16)
                 .setValue(StringUtils.datetimeToString(entity.getProcessedEventDateTime(), "No datetime"))
                 .setPlaceholder("yyyy-MM-dd HH:mm")
                 .build();
-        
+
         TextInput capInput = TextInput.create("max_cap", TextInputStyle.SHORT)
                 .setRequired(false)
                 .setMaxLength(4)
                 .setValue(StringUtils.intToString(entity.getMaxCap(), 4, "0"))
                 .setPlaceholder("0 = unlimited")
                 .build();
-        
-        // build modal with current content
-        Modal modal = Modal.create(MODAL_MANAGE_EVENT_PREFIX + postId, "Manage Event")
+
+        return Modal.create(MODAL_MANAGE_EVENT_PREFIX + postId, "Manage Event")
                 .addComponents(
                         Label.of("Event Name", nameInput),
                         Label.of("Event Location", locationInput),
@@ -242,8 +283,6 @@ public class EventSignUpListener extends ListenerAdapter {
                         Label.of("Max Cap (0 = unlimited)", capInput)
                 )
                 .build();
-        
-        event.replyModal(modal).queue();
     }
     
     private String getModalValue(ModalInteractionEvent event, String key) {
@@ -253,10 +292,10 @@ public class EventSignUpListener extends ListenerAdapter {
         return (value != null && !value.isBlank()) ? value.trim() : null;
     }
     
-    private MessageEmbed buildSlotsEmbed(List<EventAttendanceEntity> slots) {
+    private MessageEmbed buildListEmbed(String title, List<EventAttendanceEntity> slots, Color color) {
         EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("Your Slots")
-                .setColor(Color.CYAN);
+                .setTitle(title)
+                .setColor(color);
         StringBuilder desc = new StringBuilder();
         int i = 1;
         for (var slot : slots) {
@@ -267,10 +306,19 @@ public class EventSignUpListener extends ListenerAdapter {
         embed.setDescription(desc.toString());
         return embed.build();
     }
-    
-    private StringSelectMenu buildSlotSelectMenu(String postId, List<EventAttendanceEntity> slots) {
-        StringSelectMenu.Builder menu = StringSelectMenu.create(SLOT_SELECT_PREFIX + postId)
-                .setPlaceholder("Select a slot to manage...")
+
+    private MessageEmbed buildMemberDetailsEmbed(String title, EventAttendanceEntity slot) {
+        return new EmbedBuilder()
+                .setTitle(title)
+                .setColor(Color.CYAN)
+                .setDescription("**Display Name:** " + slot.getDisplayName() + "\n"
+                        + "**Status:** " + slot.getStatus())
+                .build();
+    }
+
+    private StringSelectMenu buildSelectMenu(String componentId, String placeholder, List<EventAttendanceEntity> slots) {
+        StringSelectMenu.Builder menu = StringSelectMenu.create(componentId)
+                .setPlaceholder(placeholder)
                 .setRequiredRange(1, 1);
         int i = 1;
         int added = 0;
@@ -299,8 +347,8 @@ public class EventSignUpListener extends ListenerAdapter {
             return;
         }
         
-        event.getHook().sendMessageEmbeds(buildSlotsEmbed(slots))
-                .addComponents(ActionRow.of(buildSlotSelectMenu(postId, slots)))
+        event.getHook().sendMessageEmbeds(buildListEmbed("Your Slots", slots, Color.CYAN))
+                .addComponents(ActionRow.of(buildSelectMenu(SLOT_SELECT_PREFIX + postId, "Select a slot to manage...", slots)))
                 .setEphemeral(true)
                 .queue();
     }
@@ -317,12 +365,7 @@ public class EventSignUpListener extends ListenerAdapter {
             return;
         }
         
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("Slot Details")
-                .setColor(Color.CYAN);
-        embed.setDescription("**Display Name:** " + slot.getDisplayName() + "\n"
-                + "**Status:** " + slot.getStatus() + "\n"
-                + "**Type:** " + (Boolean.TRUE.equals(slot.getIsMain()) ? "Main" : "Reserve"));
+        MessageEmbed embed = buildMemberDetailsEmbed("Slot Details", slot);
         
         event.deferEdit().queue();
         
@@ -334,7 +377,7 @@ public class EventSignUpListener extends ListenerAdapter {
         buttons.add(Button.danger(REMOVE_SLOT_PREFIX + slot.getId(), "Remove"));
         buttons.add(Button.secondary(BACK_TO_SLOTS_PREFIX + postId, "⬅ Back"));
         
-        event.getHook().editOriginalEmbeds(embed.build())
+        event.getHook().editOriginalEmbeds(embed)
                 .setComponents(ActionRow.of(buttons))
                 .queue();
     }
@@ -350,8 +393,8 @@ public class EventSignUpListener extends ListenerAdapter {
             return;
         }
         
-        event.getHook().editOriginalEmbeds(buildSlotsEmbed(slots))
-                .setComponents(ActionRow.of(buildSlotSelectMenu(postId, slots)))
+        event.getHook().editOriginalEmbeds(buildListEmbed("Your Slots", slots, Color.CYAN))
+                .setComponents(ActionRow.of(buildSelectMenu(SLOT_SELECT_PREFIX + postId, "Select a slot to manage...", slots)))
                 .queue();
     }
     
@@ -365,19 +408,14 @@ public class EventSignUpListener extends ListenerAdapter {
             var slot = eventSignUpService.getSlotById(attendanceId);
             if (slot != null) {
                 eventSignUpService.refreshSignUpMessage(slot.getPostId(), event.getGuild());
-                EmbedBuilder embed = new EmbedBuilder()
-                        .setTitle("Slot Details")
-                        .setColor(Color.CYAN);
-                embed.setDescription("**Display Name:** " + slot.getDisplayName() + "\n"
-                        + "**Status:** " + slot.getStatus() + "\n"
-                        + "**Type:** " + (Boolean.TRUE.equals(slot.getIsMain()) ? "Main" : "Reserve"));
+                MessageEmbed embed = buildMemberDetailsEmbed("Slot Details", slot);
                 
                 List<Button> buttons = new ArrayList<>();
                 buttons.add(Button.secondary(EDIT_SLOT_PREFIX + slot.getId(), "Edit Display Name"));
                 buttons.add(Button.danger(REMOVE_SLOT_PREFIX + slot.getId(), "Remove"));
                 buttons.add(Button.secondary(BACK_TO_SLOTS_PREFIX + slot.getPostId(), "⬅ Back"));
                 
-                event.getHook().editOriginalEmbeds(embed.build())
+                event.getHook().editOriginalEmbeds(embed)
                         .setComponents(ActionRow.of(buttons))
                         .queue();
             }
@@ -419,12 +457,13 @@ public class EventSignUpListener extends ListenerAdapter {
         Long attendanceId = Long.parseLong(attendanceIdStr);
         event.deferEdit().queue();
         
-        String postId = eventSignUpService.removeSlot(attendanceId);
-        if (postId == null) {
+        EventAttendanceEntity removed = eventSignUpService.removeSlot(attendanceId);
+        if (removed == null) {
             event.getHook().sendMessage("This slot was already removed.")
                     .setEphemeral(true).queue();
             return;
         }
+        String postId = removed.getPostId();
         
         eventSignUpService.refreshSignUpMessage(postId, event.getGuild());
         
@@ -437,8 +476,93 @@ public class EventSignUpListener extends ListenerAdapter {
             return;
         }
         
-        event.getHook().editOriginalEmbeds(buildSlotsEmbed(remainingSlots))
-                .setComponents(ActionRow.of(buildSlotSelectMenu(postId, remainingSlots)))
+        event.getHook().editOriginalEmbeds(buildListEmbed("Your Slots", remainingSlots, Color.CYAN))
+                .setComponents(ActionRow.of(buildSelectMenu(SLOT_SELECT_PREFIX + postId, "Select a slot to manage...", remainingSlots)))
+                .queue();
+    }
+
+    private void handleManageMembers(ButtonInteractionEvent event, String postId) {
+        event.deferReply(true).queue();
+        List<EventAttendanceEntity> members = eventSignUpService.getAllAttendees(postId);
+
+        if (members.isEmpty()) {
+            event.getHook().sendMessage("No members yet.").setEphemeral(true).queue();
+            return;
+        }
+
+        event.getHook().sendMessageEmbeds(buildListEmbed("Event Members", members, Color.CYAN))
+                .addComponents(ActionRow.of(buildSelectMenu(MEMBER_SELECT_PREFIX + postId, "Select a member to manage...", members)))
+                .setEphemeral(true)
+                .queue();
+    }
+
+    private void handleMemberSelect(StringSelectInteractionEvent event, String postId) {
+        String selectedValue = event.getValues().get(0);
+        Long attendanceId = Long.parseLong(selectedValue);
+        var member = eventSignUpService.getSlotById(attendanceId);
+
+        if (member == null) {
+            event.deferEdit().queue();
+            event.getHook().editOriginal("This member no longer exists.")
+                    .setComponents().queue();
+            return;
+        }
+
+        MessageEmbed embed = buildMemberDetailsEmbed("Member Details", member);
+
+        event.deferEdit().queue();
+
+        List<Button> buttons = new ArrayList<>();
+        buttons.add(Button.secondary(EDIT_SLOT_PREFIX + member.getId(), "Edit Display Name"));
+        buttons.add(Button.danger(REMOVE_MEMBER_PREFIX + member.getId(), "Remove"));
+        buttons.add(Button.secondary(MEMBER_BACK_PREFIX + postId, "⬅ Back"));
+
+        event.getHook().editOriginalEmbeds(embed)
+                .setComponents(ActionRow.of(buttons))
+                .queue();
+    }
+
+    private void handleMemberBack(ButtonInteractionEvent event, String postId) {
+        event.deferEdit().queue();
+        List<EventAttendanceEntity> members = eventSignUpService.getAllAttendees(postId);
+
+        if (members.isEmpty()) {
+            event.getHook().editOriginal("No members yet.")
+                    .setComponents().queue();
+            return;
+        }
+
+        event.getHook().editOriginalEmbeds(buildListEmbed("Event Members", members, Color.CYAN))
+                .setComponents(ActionRow.of(buildSelectMenu(MEMBER_SELECT_PREFIX + postId, "Select a member to manage...", members)))
+                .queue();
+    }
+
+    private void handleRemoveMember(ButtonInteractionEvent event, String attendanceIdStr) {
+        Long attendanceId = Long.parseLong(attendanceIdStr);
+        event.deferEdit().queue();
+
+        EventAttendanceEntity removed = eventSignUpService.removeSlot(attendanceId);
+        if (removed == null) {
+            event.getHook().editOriginal("This member was already removed.")
+                    .setComponents().queue();
+            return;
+        }
+
+        eventSignUpService.refreshSignUpMessage(removed.getPostId(), event.getGuild());
+
+        String removerName = event.getUser().getName();
+        event.getChannel().sendMessage(
+                removerName + " removed " + removed.getDisplayName() + " from this event.").queue();
+
+        List<EventAttendanceEntity> remaining = eventSignUpService.getAllAttendees(removed.getPostId());
+        if (remaining.isEmpty()) {
+            event.getHook().editOriginal("No members yet.")
+                    .setComponents().queue();
+            return;
+        }
+
+        event.getHook().editOriginalEmbeds(buildListEmbed("Event Members", remaining, Color.CYAN))
+                .setComponents(ActionRow.of(buildSelectMenu(MEMBER_SELECT_PREFIX + removed.getPostId(), "Select a member to manage...", remaining)))
                 .queue();
     }
 }
