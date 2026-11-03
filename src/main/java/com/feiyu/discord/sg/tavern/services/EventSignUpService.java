@@ -13,6 +13,8 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,13 +55,7 @@ public class EventSignUpService {
 
         thread.retrieveMessageById(event.getEventDetailMsgId()).queue(detailMsg -> {
             detailMsg.replyEmbeds(embed)
-                    .addComponents(ActionRow.of(
-                            Button.success("event:signup:attend:" + postId, "(un)Sign Up"),
-                            Button.primary("event:signup:reserve:" + postId, "Chope another slot"),
-                            Button.secondary("event:signup:kiv:" + postId, "KIV"),
-                            Button.secondary("event:signup:myslots:" + postId, "My Slots"),
-                            Button.danger("event:signup:manageevent:" + postId, "Manage Event")
-                    ))
+                    .addComponents(buildSignUpActionRow(postId))
                     .queue(signUpMsg -> {
                         signUpMsg.pin().queue();
                         event.setSignUpMsgId(signUpMsg.getId());
@@ -67,6 +63,71 @@ public class EventSignUpService {
                         log.info("Sign-up form created for {}: msgId={}", postId, signUpMsg.getId());
                     });
         });
+    }
+
+    private ActionRow buildSignUpActionRow(String postId) {
+        return ActionRow.of(
+                Button.success("event:signup:attend:" + postId, "(un)Sign Up"),
+                Button.primary("event:signup:reserve:" + postId, "Chope another slot"),
+                Button.secondary("event:signup:kiv:" + postId, "KIV"),
+                Button.secondary("event:signup:myslots:" + postId, "My Slots"),
+                Button.danger("event:signup:manageevent:" + postId, "Manage Event")
+        );
+    }
+
+    // Re-post the sign-up message at the bottom of the thread as a plain message,
+    // pin the new copy, then delete the old one. Mirrors the EventPromo bump.
+    // Returns true when a bump was requested, false when the event is ineligible
+    // (not found, no form, already past, or thread missing).
+    public boolean bumpSignUpMessage(String postId, Guild guild) {
+        EventEntity event = eventRepository.findTopByPostId(postId).orElse(null);
+        if (event == null || event.getSignUpMsgId() == null) return false;
+
+        // Past events already have their form locked (buttons stripped); nothing to bump.
+        if (event.getProcessedEventDateTime() != null
+                && !event.getProcessedEventDateTime().isAfter(LocalDateTime.now())) return false;
+
+        ThreadChannel thread = guild.getThreadChannelById(postId);
+        if (thread == null) return false;
+
+        String oldMsgId = event.getSignUpMsgId();
+        MessageEmbed embed = renderEmbed(postId);
+
+        thread.sendMessageEmbeds(embed)
+                .addComponents(buildSignUpActionRow(postId))
+                .queue(newMsg -> {
+                    newMsg.pin().queue(
+                            null,
+                            failure -> log.warn("Failed to pin bumped sign-up form for {}: {}",
+                                    postId, failure.getMessage()));
+                    event.setSignUpMsgId(newMsg.getId());
+                    event.setUpdatedOn(LocalDateTime.now());
+                    eventRepository.save(event);
+                    // Delete by id: fetching the old message isn't needed, and it may already
+                    // have been removed by hand (UNKNOWN_MESSAGE is expected and harmless).
+                    thread.deleteMessageById(oldMsgId).queue(
+                            null,
+                            failure -> {
+                                if (failure instanceof ErrorResponseException ex
+                                        && ex.getErrorResponse() == ErrorResponse.UNKNOWN_MESSAGE) {
+                                    log.debug("Old sign-up form for {} was already deleted", postId);
+                                } else {
+                                    log.warn("Failed to delete old sign-up form for {}: {}",
+                                            postId, failure.getMessage());
+                                }
+                            });
+                    log.info("Bumped sign-up form for postId : {}, messageId : {}", postId, newMsg.getId());
+                }, failure -> log.warn("Failed to bump sign-up form for {}: {}", postId, failure.getMessage()));
+        return true;
+    }
+
+    public void bumpAllSignUpMessages(Guild guild) {
+        List<EventEntity> managedEvents = eventRepository.findAllByPostStatus("MANAGED");
+        int bumped = 0;
+        for (EventEntity event : managedEvents) {
+            if (bumpSignUpMessage(event.getPostId(), guild)) bumped++;
+        }
+        log.info("Requested bump for {} of {} managed sign-up form(s)", bumped, managedEvents.size());
     }
 
     public List<EventAttendanceEntity> getUserSlots(String postId, String userId) {

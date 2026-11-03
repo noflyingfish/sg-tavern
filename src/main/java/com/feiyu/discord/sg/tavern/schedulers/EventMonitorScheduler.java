@@ -197,5 +197,15 @@ public class EventMonitorScheduler {
         
         log.info("EventMonitorScheduler.sendEventScheduler End");
     }
-    
+
+    // 6:30am daily - bump active sign-up forms to the bottom of their event threads
+    @Async
+    @Scheduled(cron = "0 30 6 * * ?", zone = "Asia/Singapore")
+    public void bumpSignUpScheduler() {
+        log.info("EventMonitorScheduler.bumpSignUpScheduler Start");
+        Guild guild = jda.getGuildById(valuesConfig.getGuildId());
+        eventSignUpService.bumpAllSignUpMessages(guild);
+        log.info("EventMonitorScheduler.bumpSignUpScheduler End");
+    }
+
 }
